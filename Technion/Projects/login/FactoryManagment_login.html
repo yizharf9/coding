@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-beta3/css/bootstrap.min.css" integrity="sha512-N415hCJJdJx+1UBfULt+i+ihvOn42V/kOjOpp1UTh4CZ70Hx5bDlKryWaqEKfY/8EYOu/C2MuyaluJryK1Lb5Q==" crossorigin="anonymous" /> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-beta3/css/bootstrap.min.css" integrity="sha512-N415hCJJdJx+1UBfULt+i+ihvOn42V/kOjOpp1UTh4CZ70Hx5bDlKryWaqEKfY/8EYOu/C2MuyaluJryK1Lb5Q==" crossorigin="anonymous" />
     <link rel="stylesheet" href="./FactoryManagment_login.css">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -9,14 +9,16 @@
     <title>login</title>
 </head>
 <body >
-    <h1>Login</h1><br><br>
+    <h1>Login</h1><br>
 
     <div id="loginInp">
         <span>Username : </span><br><br><input id="Username" type="text" placeholder="'blank'_user"><br><br>
         <span>Password : </span><br><br><input id="Password" type="password" placeholder="1234..." on="test()"><br><br>
-        <input type="button" value="login!" onclick="login()"><br><br>
-        <input type="button" value="reset" onclick="reset()"><br>
-        <input type="button" value="test" onclick="Test()"><br>
+        <input type="button" id="login" value="login!" onclick="login()"><br><br>
+        
+        <input type="button" value="reset" onclick="test()"><span>    </span>
+        <input type="button" value="sign-in" onclick="test()"><br>
+        
 
         
     </div>

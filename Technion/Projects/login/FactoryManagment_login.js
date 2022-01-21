@@ -1,7 +1,12 @@
-let Username = document.getElementById('Username').value
-let Password = document.getElementById('Password').value
+let Username = document.getElementById('Username')
+let Password = document.getElementById('Password')
 
-let test
+function test(){
+    console.log(Username.value)
+    console.log(Password.value)
+
+}
+
 async function getData() {
     let resp =await fetch('https://localhost:44399/api/Users')
     let data = await resp.json()
@@ -16,10 +21,11 @@ async function getData() {
     })
 }
 
-async function Test() { 
+
+async function login() { 
     let obj = {
-        userName : Username,
-        password : Password
+        username : Username.value,
+        password : Password.value
     }
 
     let Params = {
@@ -27,11 +33,14 @@ async function Test() {
         body : JSON.stringify(obj),
         headers : {'Content-type':'application/json'},
     }
-    let resp = fetch('https://localhost:44399/api/login',Params)
-    console.log(await resp)
-    let data = await resp.json()
-    console.log(data)
-    console.log()
-}
+    let resp = await fetch('https://localhost:44399/api/login',Params)
 
+    let data = await resp.json()
+    if (data) {
+        window.open('./FactoryManagment_home_page.html', '_blank',)
+    }else{
+        alert('invalid password or username!')
+    }
+    return await data
+}
 
