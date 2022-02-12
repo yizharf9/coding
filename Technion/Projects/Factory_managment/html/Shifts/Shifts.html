@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="../../css/style.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shifts</title>
+</head>
+<body onload="getInfo(),greet(),getShifts()">
+    <br><br>
+    <input type="button" value="log-out" onclick="logOut()"><br><br><br>
+    <h3 id="fullName"></h3><br><br>
+    <span>return to </span><a href="../homePage.html">home page</a><br><br>
+    &nbsp;&nbsp;&nbsp; <a href="./Shifts_add.html">add shift</a><br><br>
+    
+
+    <div >
+        <table id="shiftsTable"class="table"  >
+            <thead>
+                <th>index</th>
+                <th>Date</th>
+                <th>start Time</th>
+                <th>end Time</th>
+                <th>Assigned Employees</th>
+            </thead>
+            <!-- script loads here -->
+        </table>
+    </div>
+    
+</body>
+<script src="../../FactoryManagment_login.js"></script>
+<script>
+    let count = 0
+    async function getShifts() {
+        let resp = await fetch('https://localhost:44375/api/Shifts/')
+        let Shifts = await resp.json()
+
+        let empresp = await fetch('https://localhost:44375/api/Employee_Shift')
+        let emps = await empresp.json()
+        console.log(emps);
+        
+
+        let table = document.getElementById('shiftsTable')
+
+        Shifts.forEach(shift => {
+            count++
+            let newTr = document.createElement('tr')
+
+            let index = document.createElement('td')
+            index.innerText = count
+            newTr.appendChild(index)
+
+            let dateTD = document.createElement('td')
+            dateTD.innerText = shift.Date
+            newTr.appendChild(dateTD)
+
+            let startTD = document.createElement('td')
+            startTD.innerText = shift.startTime
+            newTr.appendChild(startTD)
+
+            let endTD = document.createElement('td')
+            endTD.innerText = shift.endTime
+            newTr.appendChild(endTD)
+            
+            let Employees = document.createElement('td')
+            let emplist = document.createElement('ul')
+            Employees.appendChild(emplist)
+
+            let currEmps = emps.filter(emp=>emp.Shifts.map(x=>x.ID).includes(shift.ID))
+
+            currEmps.forEach(emp=>{
+                let empA = document.createElement('a')
+                empA.innerText = `${emp.firstName} ${emp.lastName}`
+                empA.href = `../Employees/Employees_edit.html?&`+`empID=${emp.ID}&firstName=${emp.firstName}&lastName=${emp.lastName}&startWorkYear=${emp.startWorkYear}&departmentID=${emp.departmentID}`
+
+                emplist.appendChild(empA)
+                emplist.appendChild(document.createElement('br'))
+            })
+            newTr.appendChild(Employees)
+
+            table.appendChild(newTr)
+        });
+    } 
+
+</script>
+</html>

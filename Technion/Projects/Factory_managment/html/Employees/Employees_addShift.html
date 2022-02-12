@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="../../css/style.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shifts</title>
+</head>
+<body onload="getInfo(),greet(),getShifts(0)">
+    <br><br>
+    <input type="button" value="log-out" onclick="logOut()"><br><br><br>
+    <h3 id="fullName"></h3><br><br>
+    <span>return to </span><a href="../homePage.html">home page</a><br><br>
+    <span>return to </span><a href="./Employees_detailed.html" >Employees</a><br><br>
+
+    <div id="empEditDiv" style="text-align: center; margin: auto;">
+        <h3 id="EmployeeName"></h3>
+        <br><br>
+        <h3>at what time?</h3>
+        <input id="9shift" type="radio" name="ShiftTime" value="0" onchange="getShifts(0)"><label for="9shift">Morning (9:00-16:00)</label>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <input id="16shift" type="radio" name="ShiftTime" value="1" onchange="getShifts(1)"><label for="16shift">Evening (16:00-23:00)</label> 
+        <br><br>
+        <h3>at what date?</h3>
+        <br>
+        <select name="Shifts" id="AddedShift" onchange="console.log(value)"> 
+            <!-- script loads here -->
+        </select>
+        <br><br>
+        <input type="button" value="submit" onclick="submitShiftToEmployee()">
+    </div>
+
+
+</body>
+<script src="../../FactoryManagment_login.js"></script>
+<script>
+
+    let usp = new URLSearchParams(window.location.href)
+    let empID = usp.get('empID')
+    let empName = usp.get('empName')
+
+    let NameLabel = document.getElementById('EmployeeName')
+    NameLabel.innerText =`what shift would you like to add to ${empName}?` 
+
+    
+    let ShiftsSelection = document.getElementById('AddedShift')
+    // console.log(ShiftsSelection)
+
+    async function getShifts(a) {
+        ShiftsSelection.innerHTML = null
+        let resp = await fetch('https://localhost:44375/api/Shifts/')
+        let Shifts = await resp.json()
+        
+        for (let i = a; i < Shifts.length; i+=2) {
+            let shift =  Shifts[i]
+            let shiftOption = document.createElement('option')
+            shiftOption.value = shift.ID
+            shiftOption.innerText = shift.Date.slice(0,10)
+            ShiftsSelection.appendChild(shiftOption)
+        }
+    }
+
+    async function submitShiftToEmployee() {
+        let PickedShift = ShiftsSelection.value
+
+        let AddedShift = {
+            ID: 0,
+            EmployeeID: empID,
+            ShiftID: PickedShift
+        }
+
+        let params = {
+            method:"POST",
+            body: JSON.stringify(AddedShift),
+            headers: {'Content-type':'application/json'}
+        }
+        
+        let numOfActions = localStorage.getItem('numOfActions')
+        
+        if (parseInt(numOfActions)>0) {
+            let resp = await fetch('https://localhost:44375/api/Employee_Shift/',params)
+            let status = await resp.json()
+            await reduceActions()
+            alert(status)
+        }
+        else
+        {
+            alert('you dont have any more actions left today...\n try again tommorow')
+        }
+        console.log(AddedShift)
+    }
+</script>
+</html>

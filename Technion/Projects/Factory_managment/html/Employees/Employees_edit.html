@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="../../css/style.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employees - edit</title>
+</head>
+
+
+
+<body onload="getInfo(),greet(),getDepartments(),showButtons()">
+    <br><br>
+    <input type="button" value="log-out" onclick="logOut()"><br><br><br>
+    <h3 id="fullName"></h3>
+    <h1>Employees</h1> <br><br>
+    <span>return to </span><a href="../homePage.html">home page</a><br><br>
+    <span>return to </span><a href="./Employees_detailed.html">Employees</a><br><br>
+
+    <div id="empEditDiv" style="position: fixed; left: 40%;"  >
+        <span>First Name : </span><input onchange="changeInputData()" id="fname" type="text"><br><br>
+        <span>last Name : </span><input onchange="changeInputData()" id="lname" type="text"><br><br>
+
+        <span>Department : </span>
+        <select name="Departments" id="Departments" onchange="changeInputData()">
+            <!-- script loads here -->
+        </select><br><br>
+
+        <span>Recruitment Date : </span><input onchange="changeInputData()" type="date" name="" id="Date"><br><br>
+
+        <label for="upt_add"> I want to add a new Employee   </label><input type="checkbox" id="upt_add"  onchange="showButtons()">
+        <br><br>
+        <input id="submitButton" style="position: fixed; left: 50%;" type="button" value="submit" onclick="createEmployee()"><br><br>
+        <input id="updateButton" style="position: fixed; left: 50%;" type="button" value="update" onclick="updateEmployee()">
+
+    </div>
+    <br><br>
+</body>
+<script>
+    let usp = new URLSearchParams(window.location.href)
+    let empID = usp.get('empID')
+    console.log(empID);
+
+    function showButtons() {
+        let check = document.getElementById('upt_add')
+        let submit = document.getElementById('submitButton')
+        let update = document.getElementById('updateButton')
+
+        if (check.checked){
+            submit.style.display = 'block'
+            update.style.display = 'none'
+        }
+        else
+        {
+            submit.style.display = 'none'
+            update.style.display = 'block'
+        }
+    }
+    let depSelect = document.getElementById('Departments')
+
+    async function getDepartments(){
+        document.getElementById('upt_add').checked = true
+
+        let depID = usp.get('departmentID')
+        if (depID!=null) {
+            document.getElementById('upt_add').checked = false
+        }
+        console.log(`current department ID is ${depID} \nand its name is `)
+
+        let aresp = await fetch('https://localhost:44375/api/Departments')
+        let Departments=await aresp.json()
+
+        Departments.forEach(dep => {
+            let depOpt = document.createElement('option')
+
+            depOpt.value = parseInt(dep.ID)
+            
+            depOpt.name = "Departments"
+            depOpt.innerText = dep.Name
+
+            depSelect.appendChild(depOpt)
+        })
+    
+        let departmentID = usp.get('departmentID')
+        depSelect.value = depID 
+        console.log(depSelect.value)
+    }
+    //#region input data
+    
+    let firstName = usp.get('firstName')
+    let fname = document.getElementById('fname')
+    fname.value = firstName
+    
+    let lastName = usp.get('lastName')
+    let lname = document.getElementById('lname')
+    lname.value = lastName
+
+    let StartWorkYear = usp.get('startWorkYear')
+    let recruitmentDate = document.getElementById('Date')
+    if (StartWorkYear!=null) {
+        recruitmentDate.value = StartWorkYear.slice(0,10)
+    }
+
+    //#endregion
+    
+    
+    
+    async function updateEmployee() {
+        
+        let updatedEmployee = {
+            ID: parseInt(empID),
+            firstName: fname.value,
+            lastName : lname.value,
+            startWorkYear : StartWorkYear,
+            departmentID : parseInt(depSelect.value)
+        }
+
+        if (parseInt(localStorage.getItem('numOfActions'))>0) {
+            let uptParams = {
+                method : "PUT",
+                body: JSON.stringify(updatedEmployee),
+                headers : {'Content-type':'application/json'}
+            }
+            let uptResp = await fetch('https://localhost:44375/api/Employees/'+parseInt(empID),uptParams)
+            let status = await uptResp.json()
+            alert(status)
+            await reduceActions()
+        }
+        else
+        {
+            alert('you dont have any more actions left today...\n try again tommorow')
+            window.location.href = '../Login.html'
+        }
+
+    }
+
+    function changeInputData(){
+            let updatedEmployee = {
+            ID: parseInt(empID),
+            firstName: fname.value,
+            lastName : lname.value,
+            startWorkYear : StartWorkYear,
+            departmentID : parseInt(depSelect.value)
+        }
+
+        console.log(updatedEmployee);
+        console.log(depSelect.value);
+    }
+
+</script>
+<script src="../../FactoryManagment_login.js"></script>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="../css/style.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>login</title>
+</head>
+<body onload="checkDate()">
+    <h1>Login</h1><br>
+
+    <div id="loginInp">
+        <span>Username : </span><br><br><input id="Username" type="text" placeholder="'blank'_user"><br><br>
+        <span>Password : </span><br><br><input id="Password" type="password" placeholder="1234..." on="test()"><br><br>
+        <input type="button" id="login" value="login!" onclick="login()"><br><br>
+    </div>
+    <input type="button" value="reset" onclick="resetNumOfActions()">
+</body>
+<script src="../FactoryManagment_login.js"></script>
+<script>
+    async function resetNumOfActions() {
+        let obj = {reset: true}
+        let params = {
+            method: "POST",
+            body : JSON.stringify(obj),
+            headers : {'Content-type':'application/json'},
+        }
+        let resp = await fetch('https://localhost:44375/api/Values/',params)
+        alert('users\' Actions have been reset')
+    }
+</script>
+</html>

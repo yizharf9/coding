@@ -1,0 +1,30 @@
+body{
+  background-color:steelblue;
+}
+h1 {
+  text-align: center;
+  font-weight: bold;
+}
+
+#modDepDiv{
+  position:fixed;
+  top: 65%;
+  left: 50%;
+  right: 50%;
+}
+input{
+  text-align: center;
+}
+
+#loginInp{
+  text-align:center;
+}
+
+a{
+  text-align: center;
+  font-size: larger;
+  color: darkblue;
+}
+table{
+  text-align: center;
+}
