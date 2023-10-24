@@ -65,8 +65,8 @@ def plot_decision_boundary(model: torch.nn.Module, X: torch.Tensor, y: torch.Ten
 
     # Reshape preds and plot
     y_pred = y_pred.reshape(xx.shape).detach().numpy()
-    plt.contourf(xx, yy, y_pred, cmap=plt.cm.RdYlBu, alpha=0.7)
-    plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.RdYlBu)
+    plt.contourf(xx, yy, y_pred, cmap=plt.cm.RdYlBu, alpha=0.7) # type: ignore
+    plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.RdYlBu) # type: ignore
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
 
@@ -173,9 +173,9 @@ import torchvision
 def pred_and_plot_image(
     model: torch.nn.Module,
     image_path: str,
-    class_names: List[str] = None,
+    class_names: List[str] = None, # type: ignore
     transform=None,
-    device: torch.device = "cuda" if torch.cuda.is_available() else "cpu",
+    device: torch.device = "cuda" if torch.cuda.is_available() else "cpu" # type: ignore
 ):
     """Makes a prediction on a target image with a trained model and plots the image.
 
