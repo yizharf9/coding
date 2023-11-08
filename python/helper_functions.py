@@ -11,7 +11,6 @@ import numpy as np
 
 from torch import nn 
 import os
-import torchvision 
 
 import zipfile 
 
@@ -170,6 +169,7 @@ def plot_loss_curves(results):
 # Pred and plot image function from notebook 04
 # See creation: https://www.learnpytorch.io/04_pytorch_custom_datasets/#113-putting-custom-image-prediction-together-building-a-function
 from typing import List
+import torchvision 
 
 
 def pred_and_plot_image(
