@@ -1,0 +1,74 @@
+#include <msp430xG46x.h>    
+ 
+ORG 1100h ; ram starting pointer
+
+;alocation and vars
+;ids without last digit of version
+id1     dw      2,0,8,0,6,6,3,8 ;last digit 1
+id2     dw      2,1,1,4,4,0,4,1 ;last digit 7
+SIZE    dw      8
+
+          RSEG    CODE ; preset
+          
+; main program that runs 
+main    clr   R4
+        mov   #id1,R5
+        mov   #id2,R6
+        clr   R7
+        clr   R8
+        mov   SIZE,R9
+        
+        
+SUM     add   @R5,R7
+        add   @R6,R8
+        incd  R5
+        incd  R6
+        dec   R9
+        jnz   SUM
+
+V1      cmp   R7,R8
+        jge   BIG
+        mov   R7,R4
+        jmp   fin
+BIG     mov   R8,R4
+        
+        
+fin     jmp $ ; infinite loop        
+        nop                ; only for warnings cancellation
+
+;-------------------------------------------------------------------------------
+        COMMON INTVEC ; Interrupt Vectors
+;-------------------------------------------------------------------------------
+        ORG RESET_VECTOR ; POR, ext. Reset
+        DW main
+        END
+
+
+;first mem address - 003100
+;last mem address - 003128
+;total memory size of 40 bytes (28 in HEX)
+
+;cycle-counter shows 88 cycles when each cycle lasts (T=0.954 microseconds)
+;for a total time of : 88*0.954*10^(-6) = 83.952 microseconds
+
+
+
+
+
+
+
+
+
+
+
+;ingpre below...
+;bis(Ri,Rj) - preforming logical OR on Rj with Ri
+;xor(Ri,Rj) - same but for XOR
+;and(Ri,Rj) - same but for AND
+
+;cmp(Ri,Rj) - compare 2 words and send the output to the next operation
+;             *(Rj-Ri) does not update the registers value
+;jge(@) - jump to @ in the program if cmp returns Rj >= Ri
+;jl(@) - jump to @ in the program if cmp returns Rj < Ri
+
+;

@@ -1,0 +1,83 @@
+#include  <msp430g2553.h>
+
+#define   SwitchSel  &P1SEL
+#define   SwitchDir  &P1DIR
+#define   Switch     &P1IN
+
+#define   LedPortSel  &P2SEL
+#define   LedPortDir  &P2DIR
+#define   LedPort     &P2OUT
+
+;================= PortsSetUp routine Definitions================================
+            MODULE    PortSetUp
+            PUBLIC    P2Config, P1Config,state1,state2,state4
+            EXTERN    Delay,PWMDelayUP,PWMDelayDOWN
+            RSEG      CODE
+                
+P2Config    bis.b   #0xFF,LedPortDir 
+            mov.b   #0x00,LedPort
+            bic.b   #0xc0,LedPortSel
+            ret
+            
+P1Config    bic.b   #0xff,SwitchSel ;sel = 0000 0000
+            bic.b   #0xff,SwitchDir ;dir = 0000 0000
+            bis.b   #0x80,SwitchDir ;dir = 1000 0000
+            ret
+   
+;================= SWstates - routine Definitions ==============================                             
+            
+state1    
+L1        mov.b   R4,&P2OUT
+          call    #Delay
+          inc     R4
+          cmp     #0xff,R4
+          jnz     L1 
+          ;mov.b       #0x00,&P2OUT
+          ret                
+          
+state2    mov.b   #0xff,R4     
+L2        mov.b   R4,&P2OUT
+          call    #Delay
+          dec.b   R4
+          jnz     L2
+          ;mov.b       #0x00,&P2OUT
+          ret                
+          
+state4    mov.b   #0xff,&P1OUT
+          call    #PWMDelayUP
+          mov.b   #0x00,&P1OUT          
+          call    #PWMDelayDOWN
+          cmp.b   #0x04,R5
+          jnz         state4
+          ret                
+
+          ENDMOD 
+;================= Delay - routine Definitions ==============================
+          MODULE   PwmDelay     
+          PUBLIC   Delay,PWMDelayUP,PWMDelayDOWN
+          
+          RSEG     CODE
+          
+Delay     mov.w   #0x05,R14              
+L2D       mov.w   #0xffff,R15              
+L1D       dec.w   R15                     
+          jnz     L1D 
+          dec.b   R14
+          jnz     L2D
+L3D       mov.w   #0x5555,R15              
+          jnz     L3D
+          ret
+          
+PWMDelayUP  mov.w   #0x11a,R13
+L4UP        dec.w   R13
+            jnz L4UP
+            ret
+          
+PWMDelayDOWN  mov.w   #0x4e,R13
+L4DOWN        dec.w   R13
+              jnz L4DOWN
+              ret         
+   
+ENDMOD
+;=============================================================================              
+          END

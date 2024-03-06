@@ -1,0 +1,66 @@
+#include <msp430xG46x.h>    
+ 
+ORG 1100h
+
+Id1       DW      2,0,8,0,6,6,3,8
+Id2       DW      2,1,1,4,4,0,4,1
+Parity1   DS16    8
+Parity2   DS16    8
+IDsize    DW      8
+
+          RSEG    CODE
+          
+
+ParityFunc   clr     R4
+             mov     2(SP),R5       ; R5 is an array pointer of Parity
+             mov     4(SP),R6       ; R6 is an array pointer of Size
+             mov     6(SP),R7       ; R7 is an array pointer of ID
+        
+L1      mov     @R7,R4        ; R4 <- Mem[R5]
+        RRA     R4
+        jc      L2
+        clr     0(R5)
+        jmp     L3
+L2      mov     #1,0(R5)
+
+
+L3      incd    R5
+        incd    R7
+        dec     R6
+        jnz     L1
+        ret
+        
+        
+main           
+        mov     #0x3100,SP
+        mov     #Id1,R9
+        push    #Id1
+        push    IDsize
+        push    #Parity1
+        
+        call #ParityFunc
+        
+        mov     #0x3100,SP
+        push    #Id2
+        push    IDsize
+        push    #Parity2
+        
+        call #ParityFunc        
+        
+        
+e       jmp     e          ; equivalent to "jmp $"
+        nop                ; only for warnings cancellation
+
+;-------------------------------------------------------------------------------
+        COMMON INTVEC ; Interrupt Vectors
+;-------------------------------------------------------------------------------
+        ORG RESET_VECTOR ; POR, ext. Reset
+        DW main
+        END
+        
+;first mem address - 003100h
+;last mem address - 003154h
+;total memory size of 84 bytes (54 in HEX)
+
+;cycle-counter shows 255 cycles when each cycle lasts (T=0.954 microseconds)
+;for a total time of : 292*0.954*10^(-6) = 278.568  microseconds
