@@ -1,0 +1,57 @@
+;*******************************************************************************
+;  Program : USING LIBRARIES
+;  Written by : Hanan Ribo
+;  Date : 12/2014
+;  Description: MSP430 IAR EW; Demonstration of the MSP430 assembler
+;******************************************************************************
+#include  <msp430g2553.h>
+
+
+
+              NAME       Main
+              PUBLIC     Main
+              EXTERN     P2Config, P1Config,P1Config4
+              EXTERN     Delay
+              EXTERN     state1,state2,state4
+              
+              ORG        0x1100
+              RSEG       CSTACK                  
+              RSEG       CODE  
+;-------------------------------------------------------------------------------              
+              
+Main          mov.w      #03FFh,SP
+              mov.w      #WDTPW+WDTHOLD,&WDTCTL ; Stop WDT
+              call       #P2Config
+              call       #P1Config 
+              
+              clr.b   R4     
+check         cmp.b       #0x01,&P1IN
+              jnz          S2
+S1            call        #state1
+              jmp         check
+              
+              
+S2            cmp.b       #0x02,&P1IN
+              jnz         S4
+              call        #state2
+              jmp         check
+
+S4            
+LS4           call        #state4
+              cmp.b       #0x04,&P1IN
+              jz          LS4
+              
+             
+Sdef          mov.b       #0x00,&P2OUT
+              bic.b       #0x80,&P2OUT
+              
+              jmp         check
+              nop                     ; for break point
+;*******************************************************************************
+           COMMON  INTVEC     ; Interrupt Vectors-Begins a common segment with name of INTVEC 
+;*******************************************************************************
+           ;ORG     PORT1_VECTOR            ;PORT1 Interrupt Vector
+           ;DW      PORT1_ISR
+           ORG     RESET_VECTOR   ; MSP430 RESET Vector
+           DW      Main                   
+           END     
