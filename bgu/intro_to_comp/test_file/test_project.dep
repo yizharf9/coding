@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>1430873706</fileChecksum>
+  <configuration>
+    <name>Debug</name>
+    <outputs>
+      <file>$PROJ_DIR$\..\..\..\IAR\lab4\api.s43</file>
+      <file>$PROJ_DIR$\..\..\..\IAR\lab4\bsp.s43</file>
+      <file>$PROJ_DIR$\..\..\..\IAR\lab4\bsp.h</file>
+      <file>$PROJ_DIR$\..\..\..\IAR\lab4\main.s43</file>
+      <file>$PROJ_DIR$\..\..\..\IAR\lab4\hal.s43</file>
+      <file>$PROJ_DIR$\..\..\..\IAR\example code\bsp.h</file>
+      <file>$PROJ_DIR$\..\..\..\IAR\example code\bsp.s43</file>
+      <file>$PROJ_DIR$\Debug\Obj\bsp.r43</file>
+      <file>$PROJ_DIR$\..\..\..\..\Downloads\Tutorial 2.2 - Code Example_2\Functions.s43</file>
+      <file>$PROJ_DIR$\test_file.s43</file>
+      <file>$PROJ_DIR$\Debug\Obj\hal.r43</file>
+      <file>$TOOLKIT_DIR$\inc\msp430.h</file>
+      <file>$TOOLKIT_DIR$\inc\msp430g2553.h</file>
+      <file>$TOOLKIT_DIR$\config\lnk430G2553.xcl</file>
+      <file>$PROJ_DIR$\Debug\Obj\Functions.r43</file>
+      <file>$PROJ_DIR$\..\..\..\..\Downloads\Tutorial 2.2 - Code Example_2\Main.s43</file>
+      <file>$PROJ_DIR$\..\..\..\..\Downloads\Tutorial 2.2 - Code Example_2\Interrupts.s43</file>
+      <file>$PROJ_DIR$\Debug\Obj\api.r43</file>
+      <file>$PROJ_DIR$\Debug\Obj\Interrupts.r43</file>
+      <file>$PROJ_DIR$\Debug\Obj\test_file.r43</file>
+      <file>$PROJ_DIR$\Debug\Obj\main.r43</file>
+      <file>$PROJ_DIR$\..\..\..\IAR\example code\api.s43</file>
+      <file>$PROJ_DIR$\..\..\..\IAR\example code\hal.s43</file>
+      <file>$PROJ_DIR$\..\..\..\IAR\example code\main.s43</file>
+      <file>$PROJ_DIR$\Debug\Exe\test_project.d43</file>
+      <file>$TOOLKIT_DIR$\inc\msp430xG46x.h</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\IAR\lab4\api.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 17</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 2 11 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\IAR\lab4\bsp.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 7</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 2 11 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\IAR\lab4\main.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 20</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\IAR\lab4\hal.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 10</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 2 11 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>XLINK</name>
+          <file> 24</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\IAR\example code\bsp.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 7</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 5 11 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\Downloads\Tutorial 2.2 - Code Example_2\Functions.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 14</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\test_file.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 19</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\Downloads\Tutorial 2.2 - Code Example_2\Main.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 20</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\Downloads\Tutorial 2.2 - Code Example_2\Interrupts.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 18</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 25</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\IAR\example code\api.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 17</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 5 11 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\IAR\example code\hal.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 10</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 5 11 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\IAR\example code\main.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 20</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 5 11 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\Debug\Exe\test_project.d43</name>
+      <inputs>
+        <tool>
+          <name>XLINK</name>
+          <file> 13 17 7 10 20</file>
+        </tool>
+      </inputs>
+    </file>
+  </configuration>
+  <configuration>
+    <name>Release</name>
+    <outputs/>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>XLINK</tool>
+    </forcedrebuild>
+    <forcedrebuild>
+      <name>[REBUILD_ALL]</name>
+    </forcedrebuild>
+  </configuration>
+</project>
+
+

@@ -1,0 +1,28 @@
+#include "msp430g2553.h" // #include <msp430.h> - can be used as well
+
+;The code Blinks the LEDs array from P1 or P2 (infinite loop) 
+;-------------------------------------------------------------------------------
+            ORG      0C000h                  ; Program Reset
+;-------------------------------------------------------------------------------
+RESET       mov.w   #03FFh,SP               ; Initialize stackpointer
+StopWDT     mov.w   #WDTPW+WDTHOLD,&WDTCTL  ; Stop WDT
+SetupP1     bis.b   #0xFF,&P1DIR            ; P1 output
+            mov.b   #0x00,&P1OUT
+SetupP2     bis.b   #0xFF,&P2DIR            ; P2 output
+            bic.b   #0xC0,&P2SEL            ; only for "msp430g2553"
+;                                            ;for P2.6,P2.7 to be GPIO
+            mov.b   #0x00,&P2OUT
+                                            ;				
+Mainloop    xor.b   #0xFF,&P1OUT            ; Toggle P1
+            xor.b   #0xFF,&P2OUT            ; Toggle P2
+Wait        mov.w   #0xFFFF,R15             ; Delay to R15
+L1          dec.w   R15                     ; Decrement R15
+            jnz     L1                      ; Delay over?
+            jmp     Mainloop                ; Again
+                                            ;
+;-------------------------------------------------------------------------------
+;           Interrupt Vectors
+;-------------------------------------------------------------------------------
+            ORG     0FFFEh                  ; MSP430 RESET Vector
+            DW      RESET                   ;
+            END
