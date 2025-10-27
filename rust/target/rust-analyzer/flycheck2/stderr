@@ -1,0 +1,31 @@
+    Blocking waiting for file lock on package cache
+   0.054874100s  INFO cargo::core::compiler::fingerprint: dependency on `build_script_build` is newer than we are 13406041204.656846800s > 13406038481.124456600s "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\num-traits-0.2.18"
+   0.057218300s  INFO cargo::core::compiler::fingerprint: dependency on `zerocopy_derive` is newer than we are 13406041209.277777200s > 13406038481.308050500s "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\zerocopy-0.7.35"
+   0.058198000s  INFO cargo::core::compiler::fingerprint: dependency on `rand_core` is newer than we are 13406038481.206714400s > 13406038481.199287700s "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\rand_chacha-0.3.1"
+   0.058311500s  INFO cargo::core::compiler::fingerprint: dependency on `rand_core` is newer than we are 13406038481.206714400s > 13406038481.197279300s "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\rand-0.8.5"
+   0.058755300s  INFO cargo::core::compiler::fingerprint: fingerprint dirty for testing v0.1.0 (C:\Users\ADMIN\coding\rust\testing)/Check { test: false }/TargetInner { name: "testing", doc: true, ..: with_path("C:\\Users\\ADMIN\\coding\\rust\\testing\\src\\main.rs", Edition2021) }
+   0.058805300s  INFO cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "num_integer" })
+   0.060177900s  INFO cargo::core::compiler::fingerprint: fingerprint dirty for num-integer v0.1.46/Check { test: false }/TargetInner { ..: lib_target("num-integer", ["lib"], "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\num-integer-0.1.46\\src\\lib.rs", Edition2018) }
+   0.060219500s  INFO cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "num_traits" })
+   0.061104100s  INFO cargo::core::compiler::fingerprint: fingerprint dirty for num-traits v0.2.18/Check { test: false }/TargetInner { ..: lib_target("num-traits", ["lib"], "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\num-traits-0.2.18\\src\\lib.rs", Edition2018) }
+   0.061128400s  INFO cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDependency { name: "build_script_build", dep_mtime: FileTime { seconds: 13406041204, nanos: 656846800 }, max_mtime: FileTime { seconds: 13406038481, nanos: 124456600 } })
+   0.063634900s  INFO cargo::core::compiler::fingerprint: fingerprint dirty for rand v0.8.5/Check { test: false }/TargetInner { ..: lib_target("rand", ["lib"], "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\rand-0.8.5\\src\\lib.rs", Edition2018) }
+   0.063671000s  INFO cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDependency { name: "rand_core", dep_mtime: FileTime { seconds: 13406038481, nanos: 206714400 }, max_mtime: FileTime { seconds: 13406038481, nanos: 197279300 } })
+   0.064742400s  INFO cargo::core::compiler::fingerprint: fingerprint dirty for rand_chacha v0.3.1/Check { test: false }/TargetInner { ..: lib_target("rand_chacha", ["lib"], "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\rand_chacha-0.3.1\\src\\lib.rs", Edition2018) }
+   0.064775700s  INFO cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDependency { name: "rand_core", dep_mtime: FileTime { seconds: 13406038481, nanos: 206714400 }, max_mtime: FileTime { seconds: 13406038481, nanos: 199287700 } })
+   0.065882100s  INFO cargo::core::compiler::fingerprint: fingerprint dirty for ppv-lite86 v0.2.20/Check { test: false }/TargetInner { ..: lib_target("ppv_lite86", ["lib"], "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\ppv-lite86-0.2.20\\src/lib.rs", Edition2021) }
+   0.065921800s  INFO cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "zerocopy" })
+   0.067047300s  INFO cargo::core::compiler::fingerprint: fingerprint dirty for zerocopy v0.7.35/Check { test: false }/TargetInner { ..: lib_target("zerocopy", ["lib"], "C:\\Users\\ADMIN\\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\zerocopy-0.7.35\\src\\lib.rs", Edition2018) }
+   0.067083200s  INFO cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDependency { name: "zerocopy_derive", dep_mtime: FileTime { seconds: 13406041209, nanos: 277777200 }, max_mtime: FileTime { seconds: 13406038481, nanos: 308050500 } })
+   0.072268700s  INFO cargo::core::compiler::fingerprint: fingerprint dirty for testing v0.1.0 (C:\Users\ADMIN\coding\rust\testing)/Check { test: true }/TargetInner { name: "testing", doc: true, ..: with_path("C:\\Users\\ADMIN\\coding\\rust\\testing\\src\\main.rs", Edition2021) }
+   0.072305000s  INFO cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "num_integer" })
+    Checking num-traits v0.2.18
+    Checking zerocopy v0.7.35
+    Checking num-integer v0.1.46
+    Checking ppv-lite86 v0.2.20
+    Checking rand_chacha v0.3.1
+    Checking rand v0.8.5
+    Checking testing v0.1.0 (C:\Users\ADMIN\coding\rust\testing)
+error: could not compile `testing` (bin "testing") due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `testing` (bin "testing" test) due to 2 previous errors
