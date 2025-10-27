@@ -1,47 +1,47 @@
-use hex;
-use num_integer::binomial;
+mod util;
+use std::fmt::Debug;
+
 fn main() {
-    let a = "10011100000010101000000011001101";
-    let b = a.len();
-    println!("{}",b)
-}
-
-fn fib(n:i64)->i64 {
-    println!("{n}");
-    if n == 0 || n==1{
-        return 1;
+    let mut a : Node<i32> = Node::new(10);
+    let mut b : Node<i32> = Node::new(5);
+    let mut c : Node<i32> = Node::new(6);
+    c.left_Node(a);
+    c.right_Node(b);
+    let val = c.right;
+    if let Some(b_) = val.is_leaf() {
+        print!("{}",b_)
     }
-    return n + fib(n-1)
+}    
+
+#[derive(Debug, PartialEq)]
+struct Node<T>{
+    value : T,
+    left : Option<Box<Node<T>>>,
+    right : Option<Box<Node<T>>>,
 }
 
-fn n_set(n:i32)->Vec<i32> {
-    if n==0{
-        return vec![];
+
+impl<T> Node<T>{
+    pub fn new(value : T) -> Self{
+        Self{
+            value,
+            left:None,
+            right:None
+        }
     }
-    let mut res = n_set(n-1);
-    let mut N = vec![n.clone()];
-    res.append(&mut N);
-    return res;
+    pub fn left_Node(&mut self,l : Node<T>){
+        self.left = Some(Box::new(l));
+    }
+    pub fn right_Node(&mut self,r : Node<T>){
+        self.right = Some(Box::new(r));
+    }
+    pub fn is_leaf(&self)->bool{
+        return self.right.is_none() && self.right.is_none();
+    }
 }
 
-fn rec_sub(
-    k:usize,
-    subsets:&mut Vec<Vec<i32>> ,
-    subset:Vec<i32>,
-    i:Option<usize>
-){
-    let I = match i {
-        Some(i) => i,
-        None => 0
-    };
-    let mut Subset = subset.clone();
-    // println!("{}",I);
-    // println!("{:?}",Subset);
-    if subset.len() == k {
-        subsets.push(subset.clone())
-    }else if I<=k {
-        Subset.remove(I);
-        rec_sub(k, subsets, Subset, Some(I));
-        rec_sub(k, subsets, subset.clone(), Some(I+1));
+impl <T : Debug> Node<T>{
+    pub fn print(&self){
+        println!("{:?}",self)
     }
 }
