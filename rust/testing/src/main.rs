@@ -8,9 +8,9 @@ fn main() {
     c.left_Node(a);
     c.right_Node(b);
     let val = c.right;
-    if let Some(b_) = val.is_leaf() {
-        print!("{}",b_)
-    }
+    // if let Some(b_) = val.is_leaf() {
+    //     print!("{}",b_)
+    // }
 }    
 
 #[derive(Debug, PartialEq)]
