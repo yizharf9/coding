@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from IPython.display import HTML
 import os
-            
 
-def pixel_state(pixel,board):
+
+
+def pixel_state(pixel,current_state,board):
     total_neighbors_alive = 0
     x,y = pixel
     for i in range(-1,2):
@@ -17,18 +18,22 @@ def pixel_state(pixel,board):
                 total_neighbors_alive +=1
                 # print("hit")
     
-    if total_neighbors_alive == 2 or total_neighbors_alive == 3  :
+    if (total_neighbors_alive == 2 or total_neighbors_alive == 3) and current_state :
+        return True
+    if (total_neighbors_alive == 3) and not current_state :
         return True
     return False
 
 def remamp_board(board):
     N,M = board.shape
+    new_board = np.zeros_like(board)
     padded_board = np.pad(board,1)
     for i in range(N):
         for j in range(M):
-            new_state = pixel_state((i+1,j+1),padded_board)
-            board[i,j] = 1 if new_state else 0
-    return board
+            current_state = board[i,j]
+            new_state = pixel_state((i+1,j+1),current_state,padded_board)
+            new_board[i,j] = 1 if new_state else 0
+    return new_board
 
 def animate_picture_array(images_folder_dir,image_titles=None, interval=50, repeat_delay=1000):
 
@@ -150,7 +155,18 @@ iterations = 50
 # np.random.seed(42)
 init_board = np.random.rand(N,N) 
 init_board = (init_board<p)
+centrelized_board = np.zeros((N,N))
 
-create_life_sequence(init_board,iterations=iterations)
+space_ship_pattern = np.array(
+    [
+        [0,1,1,1],
+        [1,0,1,0],
+        [1,1,0,0],
+        [1,0,0,0],
+    ]
+)
+x,y = space_ship_pattern.shape
+centrelized_board[N//2:N//2+x,N//2:N//2+y] = space_ship_pattern
+create_life_sequence(centrelized_board,iterations=iterations)
 
-play_animation("./game_of_life_images", interval=100)
+play_animation("./game_of_life_images", interval=40)
