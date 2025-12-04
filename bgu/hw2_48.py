@@ -23,7 +23,8 @@ def calculate_CRC_Tx(data=0b10101111,poly=0b1101111,print_flag = False):
         print(f"division init. = {division:b}\n")
     
     count = 0
-    while division > poly:
+    # while division > poly:
+    while get_degree(division) > get_degree(poly):
         count += 1
         division_degree = get_degree(division)
         poly_after_shift = poly << (division_degree-poly_degree)
@@ -36,13 +37,9 @@ def calculate_CRC_Tx(data=0b10101111,poly=0b1101111,print_flag = False):
 
 
 def get_degree(poly=0b1101111):
-    count = 0 
-    while poly != 1 :
-        poly = poly >> 1
-        count +=1
-    return count
+    return poly.bit_length() - 1
 
-# result = calculate_CRC_Tx()
+# result = calculate_CRC_Tx(data = 0b10101111 , poly = 0b1101111 , print_flag=True)
 # print(f"CRC = {result:b}")
 
 def calculate_CRC_Rx(data=0b10101111,poly=0b1101111,CRC = 0b010010):
@@ -127,6 +124,7 @@ def encode_parity(data = 0b1101,p1 = 1,p2 = 0,p3 = 1,print_flag= False):
     d2d3d4 = data & 0b111
     if print_flag :
         print(f"d2d3d4 = {d2d3d4:b}\n")
+        
     return p1+ p2 + p3 + d1 + d2d3d4
 
 def calculate_Hamming74_Rx(encoded_high = 0b0110101, encoded_low = 0b1001010):
