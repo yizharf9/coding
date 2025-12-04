@@ -61,19 +61,23 @@ def first_check():
     print("Check 2-bit error CRC: ", end="")
     print( calculate_CRC_Rx(data ^ 3, poly, calculate_CRC_Tx(data, poly)) == False )
     
-# first_check()
+first_check()
 
 
-def calculate_Hamming74_Tx(data = 'Z'):
-    print(f"data = {data}")
-    print(f"data in bin = {ord(data):b}")
+def calculate_Hamming74_Tx(data = 'Z',print_flag = False):
+    if print_flag : 
+        print(f"data = {data}")
+    if print_flag : 
+        print(f"data in bin = {ord(data):b}")
     data_bin = ord(data)
     encoded_low = data_bin & 0x0F
     encoded_high = (data_bin & 0xF0 ) >> 4
     # 0 [p1] [p2] [d1] [p3] [d2] [d3]  [d4]
     # [d1] [d2] [d3] [d4]
-    print(f"encoded_low = {encoded_low:b}")
-    print(f"encoded_high = {encoded_high:b}")
+    if print_flag : 
+        print(f"encoded_low = {encoded_low:b}")
+    if print_flag : 
+        print(f"encoded_high = {encoded_high:b}")
     
     p1_high,p2_high,p3_high = parity_bits(encoded_high)
     p1_low,p2_low,p3_low = parity_bits(encoded_low)
@@ -83,37 +87,46 @@ def calculate_Hamming74_Tx(data = 'Z'):
     
     return encoded_high,encoded_low
 
-def parity_bits(data):
+def parity_bits(data,print_flag = False):
     # [d1] [d2] d3 [d4] <= LSB
     ext_p1 = 0b1101
     p1 = (ext_p1 & data).bit_count() & 1
-    print(f"p1 = {p1}")
+    if print_flag :
+        print(f"p1 = {p1}")
     
     # [d1] d2 [d3] [d4] <= LSB
     ext_p2 = 0b1011    
     p2 = (ext_p2 & data).bit_count() & 1
-    print(f"p2 = {p2}")
+    if print_flag :
+        print(f"p2 = {p2}")
     
     # d1 [d2] [d3] [d4] <= LSB
     ext_p3 = 0b0111
     p3 = (ext_p3 & data).bit_count() & 1
-    print(f"p3 = {p3}\n")
+    if print_flag :
+        print(f"p3 = {p3}\n")
     
     return p1,p2,p3
 
-def encode_parity(data = 0b1101,p1 = 1,p2 = 0,p3 = 1):
+def encode_parity(data = 0b1101,p1 = 1,p2 = 0,p3 = 1,print_flag= False):
     # 0 [p1] [p2] [d1] [p3] [d2] [d3]  [d4]
-    print(f"data = {data:b}")
+    if print_flag :
+        print(f"data = {data:b}")
     p1 = p1 << 6
-    print(f"p1 = {p1:b}")
+    if print_flag :
+        print(f"p1 = {p1:b}")
     p2 = p2 << 5
-    print(f"p2 = {p2:b}")
+    if print_flag :
+        print(f"p2 = {p2:b}")
     d1 = (data >> 3) << 4
-    print(f"d1 = {d1:b}")
+    if print_flag :
+        print(f"d1 = {d1:b}")
     p3 = p3 << 3
-    print(f"p3 = {p3:b}")
+    if print_flag :
+        print(f"p3 = {p3:b}")
     d2d3d4 = data & 0b111
-    print(f"d2d3d4 = {d2d3d4:b}\n")
+    if print_flag :
+        print(f"d2d3d4 = {d2d3d4:b}\n")
     return p1+ p2 + p3 + d1 + d2d3d4
 
 def calculate_Hamming74_Rx(encoded_high = 0b0110101, encoded_low = 0b1001010):
@@ -124,8 +137,6 @@ def calculate_Hamming74_Rx(encoded_high = 0b0110101, encoded_low = 0b1001010):
     return chr(decoded_data)
 
 def decode_parity(data = 0b1111010,print_flag = False):
-    # 1010
-    # 1011010
     # 0 [p1] [p2] [d1] [p3] [d2] [d3]  [d4]
     if print_flag :
         print(f"data = {data:b}")
