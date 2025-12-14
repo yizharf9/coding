@@ -41,9 +41,3 @@ def bin_search_testing():
         print(f"solution : {searched_index}")
     except:
         print(f"solution : {searched_element} not in list!")
-        
-
-
-
-from collections import deque():
-    
