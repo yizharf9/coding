@@ -70,15 +70,16 @@ def build_huffman_tree(tokens: List[str]) -> Node:
             return q1.popleft()
         else:
             return q2.popleft()
-
+    count = 1
     while len(q1) + len(q2) > 1:
         left = get_min_node()
         right = get_min_node()
 
         merged_freq = left.freq + right.freq
-        parent = Node(value=1, freq=merged_freq, left=left, right=right)
+        parent = Node(value=count, freq=merged_freq, left=left, right=right)
         
         q2.append(parent)
+        count +=1
 
     return q1[0] if q1 else q2[0]
 
@@ -144,7 +145,7 @@ def main():
 
     try:
         with open(input_file, "r", encoding="utf-8") as f:
-            text = f.read()
+            text = f.read()[:26] #!remove before submission
     except Exception as e:
         print(f"Error reading file: {e}")
         sys.exit(1)
@@ -165,14 +166,21 @@ def main():
     root = build_huffman_tree(tokens)
     post_order, in_order = get_traversals(root)
 
-    post_order_str = ",".join(repr(t) if t != '1' else '1' for t in post_order)
-    in_order_str = ",".join(repr(t) if t != '1' else '1' for t in in_order)
+    post_order_str = ",".join(t if t != '1' else '1' for t in post_order)
+    print(post_order_str)
+    in_order_str = ",".join(t if t != '1' else '1' for t in in_order)
+    print(in_order_str)
 
     code_map = generate_codes(root)
-    print(code_map)
     encoded_bits = "".join([code_map[t] for t in tokens])
 
     compressed_content, padding = pack_bits_to_chars(encoded_bits)
+# ==========================================  
+    # print_huffman_tree(root)
+    # print()
+    # print(post_order)
+    # print()
+    # print(in_order)
 # ==========================================  
     encoded_text = compressed_content
     postorder_list = post_order_str
@@ -181,11 +189,12 @@ def main():
     try:
         with open(output_filename, "w", encoding="utf-8") as f:
             f.write(encoded_text + "\n")
-            f.write(",".join(postorder_list) + "\n")
-            f.write(",".join(inorder_list) + "\n")
+            f.write(postorder_list + "\n")
+            f.write(inorder_list + "\n")
     except IOError as e:
         print(f"Error writing output: {e}")
         sys.exit(1)
+    return encoded_text,padding,postorder_list,inorder_list
 
 if __name__ == "__main__":
-    main()
+    encoded_text,padding,postorder_list,inorder_list = main()
