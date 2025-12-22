@@ -4,12 +4,7 @@ from collections import Counter, deque
 
 ID1 = "208066381"
 ID2 = "318793882"
-
-# ==========================================
-# Constants (Must match Decompression)
-# ==========================================
-DELIMITER = '\0'
-SECTION_SEP = "<<<<SECTION>>>>" 
+LIST_DELIMITER = '\0'
 
 class Node:
     def __init__(self, value, freq, left=None, right=None):
@@ -87,44 +82,49 @@ def main():
         return
         
     input_path = sys.argv[1]
-    OUTPUT_FILENAME = f"{ID1}_{ID2}_compressed.txt"
-    print("\n"+"-"*8+f"starting compression of {input_path}"+"-"*8+'\n')
+    output_filename = f"{ID1}_{ID2}_compressed.txt"
     
     try:
         with open(input_path, 'r', encoding='utf-8') as f:
-            # text = f.read() # Kept limit as requested
-            text = f.read()[:27] # Kept limit as requested
+            text = f.read()
     except IOError as e:
         print(f"Error reading file: {e}")
         sys.exit(1)
 
     if not text:
-        with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
+        with open(output_filename, 'w', encoding='utf-8') as f:
             pass
         return
 
     tokens = get_tokens(text)
-    print(f"tokens       : {tokens}")
     root = build_huffman_tree(tokens)
-    
     post_order, in_order = get_traversals(root)
     
     code_map = {}
     get_codes(root, "", code_map)
+    encoded_bits_str = "".join(code_map[t] for t in tokens)
     
-    encoded_bits = "".join(code_map[t] for t in tokens)
-    print(f"encoded_bits : {encoded_bits}")
+    extra_padding = 8 - (len(encoded_bits_str) % 8)
+    if extra_padding == 8:
+        extra_padding = 0
+        
+    final_bits = encoded_bits_str + ("0" * extra_padding)
     
+    packed_chars = []
+    packed_chars.append(chr(extra_padding))
+    
+    for i in range(0, len(final_bits), 8):
+        byte_str = final_bits[i:i+8]
+        byte_val = int(byte_str, 2)
+        packed_chars.append(chr(byte_val))
+        
+    compressed_content = "".join(packed_chars)
+
     try:
-        with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
-            # Structure: 
-            # BITS + SEPARATOR + POSTORDER + SEPARATOR + INORDER
-            
-            f.write(encoded_bits)
-            f.write(SECTION_SEP)
-            f.write(DELIMITER.join(post_order))
-            f.write(SECTION_SEP)
-            f.write(DELIMITER.join(in_order))
+        with open(output_filename, 'w', encoding='latin-1', newline='\n') as f:
+            f.write(compressed_content + "\n")
+            f.write(LIST_DELIMITER.join(post_order) + "\n")
+            f.write(LIST_DELIMITER.join(in_order))
             
     except IOError as e:
         print(f"Error writing output: {e}")
