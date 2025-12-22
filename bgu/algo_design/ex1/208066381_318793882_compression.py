@@ -2,12 +2,14 @@ import sys
 import re
 from collections import Counter, deque
 
-# IDs for filename - Replace with actual IDs
 ID1 = "208066381"
 ID2 = "318793882"
 
-# Must match the delimiter used in the decompression script
+# ==========================================
+# Constants (Must match Decompression)
+# ==========================================
 DELIMITER = '\0'
+SECTION_SEP = "<<<<SECTION>>>>" 
 
 class Node:
     def __init__(self, value, freq, left=None, right=None):
@@ -20,7 +22,6 @@ class Node:
         return self.left is None and self.right is None
 
 def get_tokens(text):
-    # Matches words/contractions, single spaces, or single punctuation
     pattern = r"[A-Za-z]+(?:'[A-Za-z]+)*|[ ]|[^A-Za-z ]"
     return re.findall(pattern, text)
 
@@ -29,7 +30,6 @@ def build_huffman_tree(tokens):
         return None
     
     counts = Counter(tokens)
-    # Primary sort by freq, secondary sort by value for determinism
     sorted_items = sorted(counts.items(), key=lambda x: (x[1], x[0]))
     
     q_leaves = deque([Node(val, freq) for val, freq in sorted_items])
@@ -58,8 +58,6 @@ def get_traversals(root):
     post_order = []
     in_order = []
 
-    # Re-implemented to avoid recursion depth issues on very large trees
-    # but using standard recursive helper for readability as per request
     def _post(n):
         if n:
             _post(n.left)
@@ -94,15 +92,13 @@ def main():
     
     try:
         with open(input_path, 'r', encoding='utf-8') as f:
-            # Note: Keeping your existing slice [:27] as requested, 
-            # but usually you want f.read() for the full file.
-            text = f.read()
+            # text = f.read() # Kept limit as requested
+            text = f.read()[:27] # Kept limit as requested
     except IOError as e:
         print(f"Error reading file: {e}")
         sys.exit(1)
 
     if not text:
-        # Create empty file if input is empty
         with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
             pass
         return
@@ -121,10 +117,15 @@ def main():
     
     try:
         with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
-            f.write(encoded_bits + "\n")
-            # CHANGED: Using DELIMITER ('\0') instead of ','
-            f.write(DELIMITER.join(post_order) + "\n")
-            f.write(DELIMITER.join(in_order) + "\n")
+            # Structure: 
+            # BITS + SEPARATOR + POSTORDER + SEPARATOR + INORDER
+            
+            f.write(encoded_bits)
+            f.write(SECTION_SEP)
+            f.write(DELIMITER.join(post_order))
+            f.write(SECTION_SEP)
+            f.write(DELIMITER.join(in_order))
+            
     except IOError as e:
         print(f"Error writing output: {e}")
         sys.exit(1)
