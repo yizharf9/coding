@@ -6,6 +6,9 @@ from collections import Counter, deque
 ID1 = "208066381"
 ID2 = "318793882"
 
+# Must match the delimiter used in the decompression script
+DELIMITER = '\0'
+
 class Node:
     def __init__(self, value, freq, left=None, right=None):
         self.value = str(value)
@@ -55,15 +58,6 @@ def get_traversals(root):
     post_order = []
     in_order = []
 
-    def traverse(node):
-        if not node:
-            return
-        in_order_split_idx = len(in_order)
-        traverse(node.left)
-        in_order.insert(len(in_order), node.value)
-        traverse(node.right)
-        post_order.append(node.value)
-
     # Re-implemented to avoid recursion depth issues on very large trees
     # but using standard recursive helper for readability as per request
     def _post(n):
@@ -91,21 +85,30 @@ def get_codes(node, current_code, mapping):
 
 def main():
     if len(sys.argv) != 2:
+        print(f"Usage: python {sys.argv[0]} <file.txt>")
         return
         
     input_path = sys.argv[1]
     OUTPUT_FILENAME = f"{ID1}_{ID2}_compressed.txt"
     print("\n"+"-"*8+f"starting compression of {input_path}"+"-"*8+'\n')
-    with open(input_path, 'r', encoding='utf-8') as f:
-        # text = f.read()
-        text = f.read()[:26]
-
+    
+    try:
+        with open(input_path, 'r', encoding='utf-8') as f:
+            # Note: Keeping your existing slice [:27] as requested, 
+            # but usually you want f.read() for the full file.
+            text = f.read()
+    except IOError as e:
+        print(f"Error reading file: {e}")
+        sys.exit(1)
 
     if not text:
+        # Create empty file if input is empty
+        with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
+            pass
         return
 
     tokens = get_tokens(text)
-    print(f"tokens:\n{tokens}")
+    print(f"tokens       : {tokens}")
     root = build_huffman_tree(tokens)
     
     post_order, in_order = get_traversals(root)
@@ -114,12 +117,17 @@ def main():
     get_codes(root, "", code_map)
     
     encoded_bits = "".join(code_map[t] for t in tokens)
-    print(f"encoded_bits:\n{encoded_bits}")
+    print(f"encoded_bits : {encoded_bits}")
     
-    with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
-        f.write(encoded_bits + "\n")
-        f.write(",".join(post_order) + "\n")
-        f.write(",".join(in_order) + "\n")
+    try:
+        with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
+            f.write(encoded_bits + "\n")
+            # CHANGED: Using DELIMITER ('\0') instead of ','
+            f.write(DELIMITER.join(post_order) + "\n")
+            f.write(DELIMITER.join(in_order) + "\n")
+    except IOError as e:
+        print(f"Error writing output: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
