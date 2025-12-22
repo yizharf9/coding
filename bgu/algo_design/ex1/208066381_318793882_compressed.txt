@@ -1,3 +1,3 @@
-åFx
- ,dolor,ipsum,2,sit,Lorem,amet,1,3,4,5
- ,5,dolor,2,ipsum,4,sit,3,Lorem,1,amet
+111001010100011001111
+ ,dolor,ipsum,1,sit,Lorem,amet,0,2,3,4
+ ,4,dolor,1,ipsum,3,sit,2,Lorem,0,amet

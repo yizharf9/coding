@@ -11,7 +11,7 @@ import re
 from collections import deque, Counter
 from typing import List, Dict, Tuple, Union
 
-OUTPUT_FILENAME = "./208066381_318793882_compressed.txt"
+OUTPUT_FILENAME = "./208066381_318793882_decompressed.txt"
 
 class Node:
     def __init__(self, value: Union[str, int], freq: int, left=None, right=None):
@@ -131,21 +131,27 @@ def main():
     return code_map,encoded_text
 
 if __name__ == "__main__":
+    print("\n"+"-"*8+f"starting decompression of {OUTPUT_FILENAME}"+"-"*8+'\n')
     code_map,encoded_text = main()
     code_map = sorted(code_map.items(),key=lambda x:int(x[1]),reverse=True)
     print(code_map)
-    list = [format(ord(char),"b") for char in encoded_text]
+    list = [char for char in encoded_text]
+    # list = [format(ord(char),"b") for char in encoded_text]
     bit_string = "".join(list)
     print(f"bit_string : {bit_string}\n")
     
     decoded_str_list = []
     encoding_list = []
     idx = 0
+    count = 0
     found = False
-    while idx < len(bit_string):
+    while idx < len(bit_string) and count < len(bit_string):
+        count += 1
         for key,encoding in code_map:
             if bit_string[idx:].startswith(encoding):
                 decoded_str_list.append(key)
+                # print(key)
+                # print(decoded_str_list)
                 encoding_list.append(encoding)
                 idx += len(encoding)
                 break
@@ -154,4 +160,7 @@ if __name__ == "__main__":
     print(real_str_list)
     print(decoded_str_list)
     print(encoding_list)
+    with open(OUTPUT_FILENAME,"w") as f:
+        decoded_str = "".join(decoded_str_list)
+        f.write(decoded_str)
     

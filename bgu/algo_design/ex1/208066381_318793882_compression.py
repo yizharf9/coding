@@ -1,21 +1,14 @@
-"""
-Done by yizhar fahima 208066381
-        eyal rothschild 318793882
-"""
 import sys
-
-# ==========================================
-# Implementation Area
-# ==========================================
 import re
-from collections import deque, Counter
-from typing import List, Dict, Tuple, Union
+from collections import Counter, deque
 
-OUTPUT_FILENAME = "./208066381_318793882_compressed.txt"
+# IDs for filename - Replace with actual IDs
+ID1 = "208066381"
+ID2 = "318793882"
 
 class Node:
-    def __init__(self, value: Union[str, int], freq: int, left=None, right=None):
-        self.value = value
+    def __init__(self, value, freq, left=None, right=None):
+        self.value = str(value)
         self.freq = freq
         self.left = left
         self.right = right
@@ -23,178 +16,110 @@ class Node:
     def is_leaf(self):
         return self.left is None and self.right is None
 
-    def __repr__(self):
-        return f"Node({self.value}, {self.freq})"
-
-def print_huffman_tree(node, prefix="", is_last=True):
-    if node is None:
-        return
-
-    connector = "└── " if is_last else "├── "
-
-    if node.left is None and node.right is None:
-        content = f"LEAF {repr(node.value)} (freq={node.freq})"
-    else:
-        content = f"INTERNAL (freq={node.freq})"
-
-    print(prefix + connector + content)
-
-    child_prefix = prefix + ("    " if is_last else "│   ")
-    
-    children = [child for child in [node.left, node.right] if child]
-    for i, child in enumerate(children):
-        is_last_child = (i == len(children) - 1)
-        print_huffman_tree(child, child_prefix, is_last_child)
-
-def get_tokens(text: str) -> List[str]:
-    pattern = r"[A-Za-z]+(?:'[A-Za-z]+)*|[^A-Za-z]"
+def get_tokens(text):
+    # Matches words/contractions, single spaces, or single punctuation
+    pattern = r"[A-Za-z]+(?:'[A-Za-z]+)*|[ ]|[^A-Za-z ]"
     return re.findall(pattern, text)
 
-def build_huffman_tree(tokens: List[str]) -> Node:
+def build_huffman_tree(tokens):
     if not tokens:
         return None
-
+    
     counts = Counter(tokens)
+    # Primary sort by freq, secondary sort by value for determinism
     sorted_items = sorted(counts.items(), key=lambda x: (x[1], x[0]))
-
-    q1 = deque([Node(value=item, freq=freq) for item, freq in sorted_items])
-    q2 = deque()
-
-    def get_min_node() -> Node:
-        if not q1:
-            return q2.popleft()
-        if not q2:
-            return q1.popleft()
-        
-        if q1[0].freq <= q2[0].freq:
-            return q1.popleft()
-        else:
-            return q2.popleft()
-    count = 1
-    while len(q1) + len(q2) > 1:
-        left = get_min_node()
-        right = get_min_node()
-
-        merged_freq = left.freq + right.freq
-        parent = Node(value=count, freq=merged_freq, left=left, right=right)
-        
-        q2.append(parent)
-        count +=1
-
-    return q1[0] if q1 else q2[0]
-
-def get_traversals(root: Node) -> Tuple[List[str], List[str]]:
-    post_order_list = []
-    in_order_list = []
-
-    def _postorder(node):
-        if not node: return
-        _postorder(node.left)
-        _postorder(node.right)
-        post_order_list.append(str(node.value))
-
-    def _inorder(node):
-        if not node: return
-        _inorder(node.left)
-        in_order_list.append(str(node.value))
-        _inorder(node.right)
-
-    _postorder(root)
-    _inorder(root)
-    return post_order_list, in_order_list
-
-def generate_codes(root: Node, current_code: str = "", mapping: Dict[str, str] = None) -> Dict[str, str]:
-    if mapping is None:
-        mapping = {}
     
-    if root.is_leaf():
-        mapping[root.value] = current_code
-        return mapping
+    q_leaves = deque([Node(val, freq) for val, freq in sorted_items])
+    q_internal = deque()
     
-    if root.left:
-        generate_codes(root.left, current_code + "0", mapping)
-    if root.right:
-        generate_codes(root.right, current_code + "1", mapping)
+    def get_min():
+        if not q_internal:
+            return q_leaves.popleft()
+        if not q_leaves:
+            return q_internal.popleft()
+        if q_leaves[0].freq <= q_internal[0].freq:
+            return q_leaves.popleft()
+        return q_internal.popleft()
+    
+    internal_id = 0
+    while (len(q_leaves) + len(q_internal)) > 1:
+        left = get_min()
+        right = get_min()
+        parent = Node(internal_id, left.freq + right.freq, left, right)
+        q_internal.append(parent)
+        internal_id += 1
         
-    return mapping
+    return q_leaves[0] if q_leaves else q_internal[0]
 
-def pack_bits_to_chars(binary_string: str) -> Tuple[str, int]:
-    length = len(binary_string)
-    padding = (8 - (length % 8)) % 8
-    
-    padded_binary = binary_string + ('0' * padding)
-    
-    chars = []
-    for i in range(0, len(padded_binary), 8):
-        byte_segment = padded_binary[i:i+8]
-        char_code = int(byte_segment, 2)
-        chars.append(chr(char_code))
-        
-    return "".join(chars), padding
+def get_traversals(root):
+    post_order = []
+    in_order = []
 
-# ==========================================
-# Main Execution 
-# ==========================================
+    def traverse(node):
+        if not node:
+            return
+        in_order_split_idx = len(in_order)
+        traverse(node.left)
+        in_order.insert(len(in_order), node.value)
+        traverse(node.right)
+        post_order.append(node.value)
+
+    # Re-implemented to avoid recursion depth issues on very large trees
+    # but using standard recursive helper for readability as per request
+    def _post(n):
+        if n:
+            _post(n.left)
+            _post(n.right)
+            post_order.append(n.value)
+            
+    def _in(n):
+        if n:
+            _in(n.left)
+            in_order.append(n.value)
+            _in(n.right)
+
+    _post(root)
+    _in(root)
+    return post_order, in_order
+
+def get_codes(node, current_code, mapping):
+    if node.is_leaf():
+        mapping[node.value] = current_code
+        return
+    get_codes(node.left, current_code + "0", mapping)
+    get_codes(node.right, current_code + "1", mapping)
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python 208066381_318793882_compression.py <file.txt>")   #Change ID's
-        sys.exit(1)
+        return
+        
+    input_path = sys.argv[1]
+    OUTPUT_FILENAME = f"{ID1}_{ID2}_compressed.txt"
+    print("\n"+"-"*8+f"starting compression of {input_path}"+"-"*8+'\n')
+    with open(input_path, 'r', encoding='utf-8') as f:
+        # text = f.read()
+        text = f.read()[:26]
 
-    input_file = sys.argv[1]
 
-    try:
-        with open(input_file, "r", encoding="utf-8") as f:
-            text = f.read()[:26] #!remove before submission
-    except Exception as e:
-        print(f"Error reading file: {e}")
-        sys.exit(1)
-
-    output_filename = "208066381_318793882_compressed.txt"    #Change ID's
-    
     if not text:
-        with open(output_filename, "w", encoding="utf-8") as f:
-            pass
-        sys.exit(0)
-    
-    # ==========================================  
-    # previously written code 
+        return
+
     tokens = get_tokens(text)
-    if not tokens:
-        sys.exit(0)
-
+    print(f"tokens:\n{tokens}")
     root = build_huffman_tree(tokens)
+    
     post_order, in_order = get_traversals(root)
-
-    post_order_str = ",".join(t if t != '1' else '1' for t in post_order)
-    print(post_order_str)
-    in_order_str = ",".join(t if t != '1' else '1' for t in in_order)
-    print(in_order_str)
-
-    code_map = generate_codes(root)
-    encoded_bits = "".join([code_map[t] for t in tokens])
-
-    compressed_content, padding = pack_bits_to_chars(encoded_bits)
-# ==========================================  
-    # print_huffman_tree(root)
-    # print()
-    # print(post_order)
-    # print()
-    # print(in_order)
-# ==========================================  
-    encoded_text = compressed_content
-    postorder_list = post_order_str
-    inorder_list = in_order_str
-# ==========================================
-    try:
-        with open(output_filename, "w", encoding="utf-8") as f:
-            f.write(encoded_text + "\n")
-            f.write(postorder_list + "\n")
-            f.write(inorder_list + "\n")
-    except IOError as e:
-        print(f"Error writing output: {e}")
-        sys.exit(1)
-    return encoded_text,padding,postorder_list,inorder_list
+    
+    code_map = {}
+    get_codes(root, "", code_map)
+    
+    encoded_bits = "".join(code_map[t] for t in tokens)
+    print(f"encoded_bits:\n{encoded_bits}")
+    
+    with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
+        f.write(encoded_bits + "\n")
+        f.write(",".join(post_order) + "\n")
+        f.write(",".join(in_order) + "\n")
 
 if __name__ == "__main__":
-    encoded_text,padding,postorder_list,inorder_list = main()
+    main()
