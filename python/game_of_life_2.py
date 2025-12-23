@@ -29,7 +29,7 @@ class game_of_life_simulator():
             )
         
         if activation_function is None:
-            def act(activation,current_state):
+            def act(activation,current_state,kernel):
                 if current_state and activation == 2 or activation == 3 :
                     return True
                 elif not current_state and activation == 3 :
@@ -38,8 +38,11 @@ class game_of_life_simulator():
                     return False
                 
             self.activation_function = act
+            self.cmap = "binary"
         else :
             self.activation_function = activation_function
+            self.cmap = "inferno"
+            
     
     def get_next_state(self,current_pixel):
         x,y = current_pixel
@@ -56,7 +59,7 @@ class game_of_life_simulator():
         # print(self.board)
         # print(padded_board[x_start:x_end,y_start:y_end])
         activation = np.sum (padded_board[x_start:x_end,y_start:y_end] * self.kernel)
-        return self.activation_function(activation,current_state)
+        return self.activation_function(activation,current_state,self.kernel)
     
     def get_next_board_state(self):
         next_board = np.zeros_like(self.board)
@@ -70,7 +73,8 @@ class game_of_life_simulator():
         self.board = next_board 
     
     def show_board(self):
-        plt.imshow(self.board,cmap="binary")
+        # plt.imshow(self.board,cmap=self.cmap)
+        plt.imshow(self.board,cmap="inferno")
         plt.show()
 
     def create_life_sequence(self, iterations = 100):
@@ -127,7 +131,7 @@ class game_of_life_simulator():
 
         return HTML(anim.to_jshtml())
     
-    def play_animation(self,images_folder_dir, interval=300, save_path=None, repeat_delay=1000, dpi=200):
+    def play_animation(self,images_folder_dir ="./game_of_life_images" , interval=300, save_path=None, repeat_delay=1000, dpi=200):
         images_dirs = sorted([f for f in os.listdir(images_folder_dir) if f.endswith('.png')])
         if not images_dirs:
             print(f"No PNG frames found in '{images_folder_dir}'")
@@ -169,8 +173,22 @@ init_board = np.array(
         [0,0,0,0,0],
     ]
 )
-iterations = 30
-G = game_of_life_simulator()
+iterations = 10
+def activ_function(activation,current_state,kernel):
+    kernel_size = kernel.shape[0] * kernel.shape[1]
+    if current_state and 2<=activation<=3:
+        return activation / kernel_size
+    elif not current_state and 3<=activation<=3.5:
+        return activation / kernel_size
+
+G = game_of_life_simulator(init_board=init_board,activation_function=activ_function)
+
+# G = game_of_life_simulator(init_board=init_board,activation_function=activ_function)
+# next_state = G.get_next_state((2,2))
+# print(next_state)
+# G.show_board()
+# G.get_next_board_state()
+# G.show_board()
+
 G.create_life_sequence(iterations=iterations)
-# G.animate_picture_array("game_of_life_images")
-G.play_animation("./game_of_life_images",interval=100)
+G.play_animation(interval=1000)
