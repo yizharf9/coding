@@ -1,0 +1,1 @@
+cls ;  python .\208066381_318793882_compression.py .\data.txt ;  python .\208066381_318793882_decompression.py .\208066381_318793882_compressed.txt
