@@ -53,7 +53,7 @@ for backoff in backoff_sizes:
         total_successes = run_slotted_aloha(backof_sizes=backoff,n=i,num_of_slots=num_of_slots)
         # print(total_successes)
         stats.append(total_successes)
-    print(f"finished running with : {}")
+    print(f"finished running with {backoff} backoff size...")
     # print(stats)
     x = [item[1] for item in stats]
     y = [item[0] for item in stats]
