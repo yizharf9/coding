@@ -28,12 +28,12 @@ def run_slotted_aloha(n = 4,num_of_slots = 1000,backof_sizes = 8,print_flag = Fa
         
         user_send_count = 0
         for j,user in enumerate(users):
-            if print_flag : print(f"user {j} : {user.time_to_send}")
+            if print_flag : print(f"user {j} : {user.sending_time}")
             
-            if user.time_to_send == 0:
+            if user.sending_time == 0:
                 user_send_count +=1
                 user.reset()
-                if print_flag : print(f"found one!, new time {user.time_to_send}")
+                if print_flag : print(f"found one!, new time {user.sending_time}")
             else : 
                 user.dec_time()
             
@@ -53,7 +53,7 @@ for backoff in backoff_sizes:
         total_successes = run_slotted_aloha(backof_sizes=backoff,n=i,num_of_slots=num_of_slots)
         # print(total_successes)
         stats.append(total_successes)
-    print(f"finished running with : {}")
+    print(f"finished running with {backoff} backoff size...")
     # print(stats)
     x = [item[1] for item in stats]
     y = [item[0] for item in stats]
