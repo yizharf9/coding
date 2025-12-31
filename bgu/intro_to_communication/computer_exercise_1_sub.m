@@ -277,3 +277,153 @@ plot(t, x_d2_FM, 'b--');
 title('FM (Channel 2) Demodulated Output');
 xlabel('Time [s]');
 grid on; hold off;
+
+
+function s_t = sym_gen(p_s1, p_s2, N)
+    % Define symbols
+    symbols = [-1, 0, 1]; % corresponding to s1, s2, s3
+    
+    % Calculate cumulative probabilities
+    p_s3 = 1 - p_s1 - p_s2;
+    edges = [0, p_s1, p_s1 + p_s2, 1];
+    
+    % Generate random numbers
+    rand_vals = rand(1, N);
+    
+    % Map to symbols
+    s_t = zeros(1, N);
+    
+    % Assign s1 (-1)
+    s_t(rand_vals <= edges(2)) = symbols(1);
+    
+    % Assign s2 (0)
+    s_t(rand_vals > edges(2) & rand_vals <= edges(3)) = symbols(2);
+    
+    % Assign s3 (1)
+    s_t(rand_vals > edges(3)) = symbols(3);
+end
+
+function received_t = rec_gen(s_t, tran_prob)
+    % tran_prob is the 3x4 matrix defined in the analysis
+    % s_t contains values -1, 0, 1
+    
+    N = length(s_t);
+    received_t = zeros(1, N);
+    
+    % Map symbols to indices 1, 2, 3 for matrix indexing
+    % -1 -> 1, 0 -> 2, 1 -> 3
+    s_indices = zeros(1, N);
+    s_indices(s_t == -1) = 1;
+    s_indices(s_t == 0) = 2;
+    s_indices(s_t == 1) = 3;
+    
+    % Generate random numbers for channel transition
+    rand_vals = rand(1, N);
+    
+    for i = 1:N
+        row_idx = s_indices(i);
+        probs = tran_prob(row_idx, :);
+        
+        % Create cumulative distribution for this row
+        cdf = cumsum(probs);
+        
+        % Determine output r1(1), r2(2), r3(3), or r4(4)
+        if rand_vals(i) <= cdf(1)
+            received_t(i) = 1;
+        elseif rand_vals(i) <= cdf(2)
+            received_t(i) = 2;
+        elseif rand_vals(i) <= cdf(3)
+            received_t(i) = 3;
+        else
+            received_t(i) = 4;
+        end
+    end
+end
+
+function dec_s = test_dec(received_t, type)
+    N = length(received_t);
+    dec_s = zeros(1, N);
+    
+    % Decisions derived from Analysis
+    % s1 = -1, s2 = 0, s3 = 1
+    
+    if strcmp(type, 'ML')
+        % ML Rules:
+        % r1 -> s1 (-1)
+        % r2 -> s3 (1)
+        % r3 -> s2 (0)
+        % r4 -> s3 (1)
+        
+        for i = 1:N
+            r = received_t(i);
+            if r == 1
+                dec_s(i) = -1;
+            elseif r == 2
+                dec_s(i) = 1;
+            elseif r == 3
+                dec_s(i) = 0;
+            elseif r == 4
+                dec_s(i) = 1;
+            end
+        end
+        
+    elseif strcmp(type, 'MAP')
+        % MAP Rules:
+        % r1 -> s1 (-1)
+        % r2 -> s1 (-1)
+        % r3 -> s2 (0)
+        % r4 -> s3 (1)
+        
+        for i = 1:N
+            r = received_t(i);
+            if r == 1
+                dec_s(i) = -1;
+            elseif r == 2
+                dec_s(i) = -1;
+            elseif r == 3
+                dec_s(i) = 0;
+            elseif r == 4
+                dec_s(i) = 1;
+            end
+        end
+    else
+        error('Invalid type. Choose ML or MAP.');
+    end
+end
+
+clc; clear; close all;
+
+% --- Setup ---
+N = 10000;
+p1 = 0.5;
+p2 = 0.25;
+
+% Define Transition Matrix (Rows=s1,s2,s3; Cols=r1,r2,r3,r4)
+% Values taken from the visual diagram analysis
+tran_prob = [0.6, 0.2, 0.2, 0.0; ...
+             0.3, 0.1, 0.5, 0.1; ...
+             0.0, 0.25, 0.4, 0.35];
+
+% --- 1. Generate Symbols ---
+s_t = sym_gen(p1, p2, N);
+
+% --- 2. Generate Received Signals ---
+received_t = rec_gen(s_t, tran_prob);
+
+% --- 3. ML Decoding and Error ---
+dec_s_ML = test_dec(received_t, 'ML');
+errors_ML = sum(s_t ~= dec_s_ML);
+Pe_ML_sim = errors_ML / N;
+
+% --- 4. MAP Decoding and Error ---
+dec_s_MAP = test_dec(received_t, 'MAP');
+errors_MAP = sum(s_t ~= dec_s_MAP);
+Pe_MAP_sim = errors_MAP / N;
+
+% --- 5. Display Results ---
+fprintf('--- Simulation Results (N=%d) ---\n', N);
+fprintf('Theoretical ML Error: 0.4250\n');
+fprintf('Simulated ML Error:   %.4f\n\n', Pe_ML_sim);
+
+fprintf('Theoretical MAP Error: 0.3875\n');
+fprintf('Simulated MAP Error:   %.4f\n', Pe_MAP_sim);
