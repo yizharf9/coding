@@ -2,7 +2,5 @@ rust/testing/*
 rust/aoc_2023/*
 
 bgu/algo_design/208066381*
-bgu/gen_models/__pycache__/
-bgu/gen_models/data/
 
-*test*
+bgu/gen_models/*
