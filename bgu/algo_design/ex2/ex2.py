@@ -27,7 +27,9 @@ class TarjanSCC() :
         self.nodes_in_stack = [False]*N # all nodes not in stack in initialization
         self.timer = 0
         
-        self.SCC_count = -1
+        self.SCCs = []
+        self.SCC_count = 0
+        self.Boards = []
     
     def time_inc(self):
         self.timer += 1
@@ -56,15 +58,18 @@ class TarjanSCC() :
             if self.nodes_in_stack[to] :
                 self.Low[at] = min(self.Low[at],self.Low[to])
         
-        
+        current_scc = []
         if self.IDs[at] == self.Low[at] :
             while len(self.node_stack) > 0 :
                 node = self.node_stack.pop()
+                current_scc.append(node)
                 self.nodes_in_stack[node] = False
                 self.Low[node] = self.IDs[at]
-                if node == self.IDs[at] :
+                if node == at :
                     break
-        self.SCC_count +=1
+        if len(current_scc) > 0 :
+            self.SCCs.append(current_scc)
+            self.SCC_count +=1
     
     def count_SCC(self,P_flag = True):
         N = len(self.adj_list)
@@ -72,7 +77,60 @@ class TarjanSCC() :
             if self.IDs[i] == -1 :
                 self.DFS(i,p_flag=P_flag)
         return self.Low
+    
+    def get_Boards_from_SCCs(self):
+        for i,scc in enumerate(self.SCCs) :
+            tasks = []
+            for node in scc :
+                t = T[node]
+                g = G[node]
+                tasks.append((node,t,g))
+            b = Board(i,tasks)
+            b.compute_internal_schedule()
+            self.Boards.append(b)
 
+
+class Board:
+    def __init__(self, board_id, tasks):
+        self.id = board_id
+        self.tasks = tasks
+        
+        self.rep = min(task[0] for task in tasks) 
+        
+        self.internal_order = [] 
+        self.duration = 0        
+        
+        self.start_time = 0      
+        self.finish_time = 0     
+        self.predecessors = []   
+
+    def compute_internal_schedule(self):
+        group1 = []
+        group2 = []
+        
+        for task in self.tasks : 
+            if task[1] < task[2] :
+                group1.append(task)
+            elif task[1] >= task[2] :
+                group2.append(task)
+            else :
+                raise ValueError(f"task values are not valid! {task}")
+        
+        group1.sort(key = lambda x : x[1])
+        group2.sort(key = lambda x : x[2],reverse=True)
+        
+        self.internal_order = group1 + group2
+        
+        first_node,t,g = self.internal_order[0]
+        time_m1 = t
+        time_m2 = t+g
+        
+        for task in self.internal_order[1:] :
+            node,t,g = task
+            time_m1 += t
+            time_m2 = max(time_m2,time_m1) + g
+        
+        self.duration = time_m2
 
 def initiate_sample_data_file(path = "./data.txt",N = 10 ,p = 0.25,test_example = True):
     if not test_example :
@@ -103,8 +161,6 @@ def read_data_file(path = "./data.txt",p_flag = True): #? make sure this answers
     T = []
     G = []
     with open(path,"r") as f :
-        if len(f.read()) == 0 : # empty graph
-            return np.array([[]]),T,G
         for i,line in enumerate(f.readlines()):
             line = line.strip()
             line = line.split(" ")
@@ -126,9 +182,8 @@ def read_data_file(path = "./data.txt",p_flag = True): #? make sure this answers
         print(f"G : {G}")
     return data,T,G
 
-
 if __name__ == "__main__":
-    # initiate_sample_data_file(test_example=True)
+    initiate_sample_data_file(test_example=True)
     if len(sys.argv) != 2 :
         print("invalid arg list for execution!")
         exit()
@@ -151,12 +206,19 @@ if __name__ == "__main__":
     print(f"N : {N}\n\n")
     
     lows = tar.count_SCC(P_flag=False)
-    print(f"low link values : {lows}")
+    print(f"\nlow link values : {lows}")
+    
+    print(f"SCCs : ")
+    for scc in tar.SCCs:
+        print(scc)
+    
+    tar.get_Boards_from_SCCs()
+    
     
     #! remove before submission , will be graded 0!!!
-    G = nx.DiGraph(data)
-    nx.draw(G,with_labels=True,pos=nx.circular_layout(G))
-    plt.show()
+    # G = nx.DiGraph(data)
+    # nx.draw(G,with_labels=True,pos=nx.circular_layout(G))
+    # plt.show()
     
     # get_path(data,0,4)
     
