@@ -30,6 +30,8 @@ class TarjanSCC() :
         self.SCCs = []
         self.SCC_count = 0
         self.Boards = []
+        
+        self.node_to_board_id = [-1]*N
     
     def time_inc(self):
         self.timer += 1
@@ -85,11 +87,48 @@ class TarjanSCC() :
                 t = T[node]
                 g = G[node]
                 tasks.append((node,t,g))
+                self.node_to_board_id[node] = i
             b = Board(i,tasks)
             b.compute_internal_schedule()
+            
             self.Boards.append(b)
+    
+    def build_board_graph(self):
+        self.board_adj = [set() for _ in range(self.SCC_count)]
+        N = self.adj_mat.shape[0]
+        for u in range(N):
+            for v in self.adj_list[u]:
+                u_board = self.node_to_board_id[u]
+                v_board = self.node_to_board_id[v]
+                
+                if u_board != v_board:
+                    self.board_adj[u_board].add(v_board)
 
-
+        self.board_adj = [list(neighbors) for neighbors in self.board_adj]
+    
+    def get_max_time(self, board_id, runtime=None):
+        if runtime is None:
+            runtime = {}
+            
+        if board_id in runtime:
+            return runtime[board_id]
+        
+        neighbors = self.board_adj[board_id]
+        current_duration = self.Boards[board_id].duration
+        
+        if not neighbors:
+            total_time = current_duration
+        else:
+            max_neighbor_time = max([self.get_max_time(u, runtime) for u in neighbors])
+            total_time = current_duration + max_neighbor_time
+        
+        runtime[board_id] = total_time
+        return total_time
+    
+    def max_time_over_all_boards(self):
+        max_time = max([ self.get_max_time(board_id) for board_id in range(self.SCC_count)])
+        return max_time
+    
 class Board:
     def __init__(self, board_id, tasks):
         self.id = board_id
@@ -132,11 +171,11 @@ class Board:
         
         self.duration = time_m2
 
-def initiate_sample_data_file(path = "./data.txt",N = 10 ,p = 0.25,test_example = True):
+def initiate_sample_data_file(path = "./data.txt",N = 10 ,p = 0.25,test_example = True,p_flag=False):
     if not test_example :
         data_mat = np.random.rand(N,N) <= p
         data_mat = np.array(data_mat,dtype=int)
-        print(data_mat)
+        if p_flag : print(data_mat)
         
         T = np.random.randint(1,N,N)
         G = np.random.randint(1,N,N)
@@ -203,17 +242,26 @@ if __name__ == "__main__":
         print(l)
     print(f"\nT : {T}")
     print(f"G : {G}")
-    print(f"N : {N}\n\n")
+    print(f"N : {N}")
     
     lows = tar.count_SCC(P_flag=False)
-    print(f"\nlow link values : {lows}")
     
-    print(f"SCCs : ")
+    print(f"\nlow link values : {lows}")
+    print(f"\nSCCs : ")
     for scc in tar.SCCs:
         print(scc)
     
     tar.get_Boards_from_SCCs()
+    tar.build_board_graph()
     
+    print(tar.board_adj)
+    print(f"\nboard_adj : ")
+    for l in tar.board_adj:
+        print(l)
+    
+    max_time =  tar.max_time_over_all_boards()
+    
+    print(f'\nmax_time : {max_time}')
     
     #! remove before submission , will be graded 0!!!
     # G = nx.DiGraph(data)
