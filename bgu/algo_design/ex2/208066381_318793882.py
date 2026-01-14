@@ -4,175 +4,28 @@ import sys
 
 import networkx as nx #! remove before submission , will be graded 0!!!
 
-class TarjanSCC() :
-    def __init__(self,adj_mat:np.ndarray,T:list[int],G:list[int]):
-        self.adj_mat = adj_mat
-        N = adj_mat.shape[0]
-        
-        self.adj_list = []
-        for node in range(N):
-            node_neighbors = []
-            for neighbor in range(N):
-                if adj_mat[node,neighbor] == 1:
-                    node_neighbors.append(neighbor)
-            self.adj_list.append(node_neighbors)
-        
-        self.real_T = T
-        self.G = G
-        
-        self.IDs = [-1]*N
-        self.Low = [0]*N
-        
-        self.node_stack = [] # all nodes initiated to not discovered in initialization
-        self.nodes_in_stack = [False]*N # all nodes not in stack in initialization
-        self.timer = 0
-        
-        self.SCCs = []
-        self.SCC_count = 0
-        self.Boards = []
-        
-        self.node_to_board_id = [-1]*N
-    
-    def time_inc(self):
-        self.timer += 1
-    
-    def DFS(self,at:int,p_flag = True):
-        
-        self.node_stack.append(at)
-        self.nodes_in_stack[at] = True
-        
-        self.IDs[at] = self.timer
-        self.Low[at] = self.timer
-        
-        self.time_inc()
-        N = self.adj_mat.shape[0]
-        
-        if p_flag : 
-            print(f"\ntime:{self.timer}")
-            print(f"at : {at}")
-            
-        for to in self.adj_list[at]:
-            if p_flag : 
-                print(f"to : {to}",end=" ") 
-                print()
-            if self.IDs[to] == -1 : 
-                self.DFS(to,p_flag)
-            if self.nodes_in_stack[to] :
-                self.Low[at] = min(self.Low[at],self.Low[to])
-        
-        current_scc = []
-        if self.IDs[at] == self.Low[at] :
-            while len(self.node_stack) > 0 :
-                node = self.node_stack.pop()
-                current_scc.append(node)
-                self.nodes_in_stack[node] = False
-                self.Low[node] = self.IDs[at]
-                if node == at :
-                    break
-        if len(current_scc) > 0 :
-            self.SCCs.append(current_scc)
-            self.SCC_count +=1
-    
-    def count_SCC(self,P_flag = True):
-        N = len(self.adj_list)
+
+def initiate_sample_data_file(path = "./input.txt",N = 10 ,p = 0.25,test_example = True,p_flag=False,init_mat=None):
+    if init_mat is not None :
+        N = len(init_mat)
+        T = [0]*N
+        G = [0]*N
         for i in range(N):
-            if self.IDs[i] == -1 :
-                self.DFS(i,p_flag=P_flag)
-        return self.Low
-    
-    def get_Boards_from_SCCs(self):
-        for i,scc in enumerate(self.SCCs) :
-            tasks = []
-            for node in scc :
-                t = T[node]
-                g = G[node]
-                tasks.append((node,t,g))
-                self.node_to_board_id[node] = i
-            b = Board(i,tasks)
-            b.compute_internal_schedule()
-            
-            self.Boards.append(b)
-    
-    def build_board_graph(self):
-        self.board_adj = [set() for _ in range(self.SCC_count)]
-        N = self.adj_mat.shape[0]
-        for u in range(N):
-            for v in self.adj_list[u]:
-                u_board = self.node_to_board_id[u]
-                v_board = self.node_to_board_id[v]
-                
-                if u_board != v_board:
-                    self.board_adj[u_board].add(v_board)
-
-        self.board_adj = [list(neighbors) for neighbors in self.board_adj]
-    
-    def get_max_time(self, board_id, runtime=None):
-        if runtime is None:
-            runtime = {}
-            
-        if board_id in runtime:
-            return runtime[board_id]
+            T[i] , G[i] = init_mat[i][i]
+            init_mat[i][i] = 0
         
-        neighbors = self.board_adj[board_id]
-        current_duration = self.Boards[board_id].duration
-        
-        if not neighbors:
-            total_time = current_duration
-        else:
-            max_neighbor_time = max([self.get_max_time(u, runtime) for u in neighbors])
-            total_time = current_duration + max_neighbor_time
-        
-        runtime[board_id] = total_time
-        return total_time
-    
-    def max_time_over_all_boards(self):
-        max_time = max([ self.get_max_time(board_id) for board_id in range(self.SCC_count)])
-        return max_time
-    
-class Board:
-    def __init__(self, board_id, tasks):
-        self.id = board_id
-        self.tasks = tasks
-        
-        self.rep = min(task[0] for task in tasks) 
-        
-        self.internal_order = [] 
-        self.duration = 0        
-        
-        self.start_time = 0      
-        self.finish_time = 0     
-        self.predecessors = []   
-
-    def compute_internal_schedule(self):
-        group1 = []
-        group2 = []
-        
-        for task in self.tasks : 
-            if task[1] < task[2] :
-                group1.append(task)
-            elif task[1] >= task[2] :
-                group2.append(task)
-            else :
-                raise ValueError(f"task values are not valid! {task}")
-        
-        group1.sort(key = lambda x : x[1])
-        group2.sort(key = lambda x : x[2],reverse=True)
-        
-        self.internal_order = group1 + group2
-        
-        first_node,t,g = self.internal_order[0]
-        time_m1 = t
-        time_m2 = t+g
-        
-        for task in self.internal_order[1:] :
-            node,t,g = task
-            time_m1 += t
-            time_m2 = max(time_m2,time_m1) + g
-        
-        self.duration = time_m2
-
-def initiate_sample_data_file(path = "./input.txt",N = 10 ,p = 0.25,test_example = True,p_flag=False):
-    if not test_example :
+        with open(path,"w") as f :
+            lines = []
+            for i in range(N) :
+                added_line = ""
+                for j in range(N):
+                    if i != j :
+                        added_line += str(init_mat[i][j]) + " "
+                    else :
+                        added_line += str(T[i]) + "," + str(G[i]) + " "
+                lines.append(added_line + "\n")
+            f.writelines(lines)
+    elif not test_example :
         data_mat = np.random.rand(N,N) <= p
         data_mat = np.array(data_mat,dtype=int)
         if p_flag : print(data_mat)
@@ -195,80 +48,298 @@ def initiate_sample_data_file(path = "./input.txt",N = 10 ,p = 0.25,test_example
             mat_string = "2,5 1 0 0\n1 4,1 1 0\n0 0 3,2 1\n0 0 0 1,4"
             f.write(mat_string)
 
-def read_data_file(path = "./data.txt",p_flag = True): #? make sure this answers the actual format of the input
-    lines = []
-    T = []
-    G = []
-    with open(path,"r") as f :
-        for i,line in enumerate(f.readlines()):
-            line = line.strip()
-            line = line.split(" ")
-            ti,gi = line[i].split(',')
-            line[i] = "0"
-            if p_flag : 
-                print(line)
-                print(i,ti,gi)
-            
-            T.append(int(ti))
-            G.append(int(gi))
-            lines.append([int(s) for s in line])
-            
+import sys
+import os
+import heapq
 
-    data = np.array(lines)
-    if p_flag : 
-        print(f"data : \n{data}")
-        print(f"T : {T}")
-        print(f"G : {G}")
-    return data,T,G
+# --- Data Structures ---
 
+class Task:
+    def __init__(self, task_id, t, g):
+        self.id = task_id
+        self.t = t  # Review time
+        self.g = g  # Integration time
+
+class Board:
+    def __init__(self, board_id, members, tasks_map):
+        self.id = board_id
+        self.members = sorted(members)  # List of task IDs in this board
+        self.rep = self.members[0]      # Smallest review ID
+        self.duration = 0
+        self.internal_order = []
+        self.start_time = 0
+        self.finish_time = 0
+        self.tasks_map = tasks_map      # Reference to global task dict
+        
+        self._calculate_schedule()
+
+    def _calculate_schedule(self):
+        """
+        Applies Johnson's Rule to minimize board makespan T[B].
+        """
+        group_u = []
+        group_v = []
+
+        for tid in self.members:
+            task = self.tasks_map[tid]
+            if task.t < task.g:
+                group_u.append(task)
+            else:
+                group_v.append(task)
+
+        group_u.sort(key=lambda x: x.t)
+        group_v.sort(key=lambda x: x.g, reverse=True)
+
+        ordered_tasks = group_u + group_v
+        self.internal_order = [t.id for t in ordered_tasks]
+
+        current_review_finish = 0
+        current_integration_finish = 0
+
+        for task in ordered_tasks:
+            current_review_finish += task.t
+            start_integration = max(current_integration_finish, current_review_finish)
+            current_integration_finish = start_integration + task.g
+
+        self.duration = current_integration_finish
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+# --- Algorithms ---
+
+def parse_input(filename):
+    with open(filename, 'r') as f:
+        lines = [l.strip() for l in f if l.strip()]
+
+    N = len(lines)
+    adj = {i: [] for i in range(1, N + 1)}
+    tasks = {}
+
+    for r, line in enumerate(lines):
+        tokens = line.split()
+        u = r + 1 
+        
+        for c, token in enumerate(tokens):
+            v = c + 1 
+            
+            if u == v:
+                t_str, g_str = token.split(',')
+                tasks[u] = Task(u, int(t_str), int(g_str))
+            else:
+                if token == '1':
+                    adj[u].append(v)
+    
+    return N, tasks, adj
+
+def find_sccs(N, adj):
+    visited = set()
+    stack = []
+    on_stack = set()
+    ids = {}
+    low = {}
+    id_counter = 0
+    sccs = []
+
+    def dfs(at):
+        nonlocal id_counter
+        stack.append(at)
+        on_stack.add(at)
+        visited.add(at)
+        ids[at] = low[at] = id_counter
+        id_counter += 1
+
+        for to in adj[at]:
+            if to not in visited:
+                dfs(to)
+                low[at] = min(low[at], low[to])
+            elif to in on_stack:
+                low[at] = min(low[at], ids[to])
+
+        if ids[at] == low[at]:
+            component = []
+            while stack:
+                node = stack.pop()
+                on_stack.remove(node)
+                component.append(node)
+                if node == at:
+                    break
+            sccs.append(component)
+
+    for i in range(1, N + 1):
+        if i not in visited:
+            dfs(i)
+
+    return sccs
+
+def build_board_graph(sccs, tasks, original_adj):
+    temp_boards = []
+    for comp in sccs:
+        rep = min(comp)
+        temp_boards.append({'rep': rep, 'members': comp})
+    
+    temp_boards.sort(key=lambda x: x['rep'])
+    
+    boards = []
+    node_to_board_map = {} 
+    
+    for idx, b_data in enumerate(temp_boards):
+        b_id = idx + 1
+        new_board = Board(b_id, b_data['members'], tasks)
+        boards.append(new_board)
+        for member in b_data['members']:
+            node_to_board_map[member] = new_board
+            
+    board_adj = {b.id: set() for b in boards}
+    board_in_degree = {b.id: 0 for b in boards}
+    
+    for u in original_adj:
+        u_board = node_to_board_map[u]
+        for v in original_adj[u]:
+            v_board = node_to_board_map[v]
+            
+            if u_board.id != v_board.id:
+                if v_board.id not in board_adj[u_board.id]:
+                    board_adj[u_board.id].add(v_board.id)
+                    board_in_degree[v_board.id] += 1
+                    
+    return boards, node_to_board_map, board_adj, board_in_degree
+
+def schedule_boards(boards, board_adj, board_in_degree):
+    pq = []
+    for b in boards:
+        if board_in_degree[b.id] == 0:
+            heapq.heappush(pq, b)
+            
+    execution_order = []
+    id_to_board = {b.id: b for b in boards}
+    
+    while pq:
+        u_board = heapq.heappop(pq)
+        execution_order.append(u_board.id)
+        
+        current_finish = u_board.start_time + u_board.duration
+        u_board.finish_time = current_finish
+        
+        for v_id in board_adj[u_board.id]:
+            v_board = id_to_board[v_id]
+            if current_finish > v_board.start_time:
+                v_board.start_time = current_finish
+            
+            board_in_degree[v_id] -= 1
+            if board_in_degree[v_id] == 0:
+                heapq.heappush(pq, v_board)
+                
+    return execution_order
+
+def get_critical_path(boards, board_adj):
+    if not boards:
+        return 0, []
+
+    id_to_board = {b.id: b for b in boards}
+    board_rev_adj = {b.id: [] for b in boards}
+    for u_id, v_ids in board_adj.items():
+        for v_id in v_ids:
+            board_rev_adj[v_id].append(u_id)
+
+    max_finish = -1
+    for b in boards:
+        if b.finish_time > max_finish:
+            max_finish = b.finish_time
+            
+    candidates = [b for b in boards if b.finish_time == max_finish]
+    candidates.sort(key=lambda x: x.id)
+    curr_board = candidates[0]
+    
+    path_boards = [curr_board]
+    
+    while True:
+        preds = board_rev_adj[curr_board.id]
+        if not preds:
+            break
+            
+        critical_preds = []
+        for p_id in preds:
+            pred_board = id_to_board[p_id]
+            if pred_board.finish_time == curr_board.start_time:
+                critical_preds.append(pred_board)
+        
+        if not critical_preds:
+            break
+            
+        critical_preds.sort(key=lambda x: x.id)
+        best_pred = critical_preds[0]
+        
+        path_boards.append(best_pred)
+        curr_board = best_pred
+        
+    path_boards.reverse()
+    
+    final_task_path = []
+    for b in path_boards:
+        final_task_path.extend(b.internal_order)
+        
+    return max_finish, final_task_path
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python ID1_ID2.py input.txt")
+        return
+
+    input_file = sys.argv[1]
+    script_name = os.path.basename(sys.argv[0])
+    name_part = os.path.splitext(script_name)[0]
+    output_file = f"{name_part}_Output.txt"
+
+    N, tasks, adj = parse_input(input_file)
+    sccs = find_sccs(N, adj)
+    boards, node_to_board, board_adj, in_degree = build_board_graph(sccs, tasks, adj)
+    exec_order_ids = schedule_boards(boards, board_adj, in_degree)
+    overall_completion, critical_path_tasks = get_critical_path(boards, board_adj)
+    
+    with open(output_file, 'w') as f:
+        f.write(f"{len(boards)}\n")
+        f.write(f"{overall_completion}\n")
+        
+        board_ids_by_node = []
+        for i in range(1, N + 1):
+            board_ids_by_node.append(str(node_to_board[i].id))
+        f.write(" ".join(board_ids_by_node) + "\n")
+        
+        f.write(" ".join(map(str, exec_order_ids)) + "\n")
+        
+        id_to_board = {b.id: b for b in boards}
+        for b_id in exec_order_ids:
+            b = id_to_board[b_id]
+            row = [
+                len(b.members),
+                b.rep,
+                b.start_time,
+                b.finish_time,
+                b.duration
+            ]
+            row.extend(b.internal_order)
+            f.write(" ".join(map(str, row)) + "\n")
+            
+        cp_row = [len(critical_path_tasks)] + critical_path_tasks
+        f.write(" ".join(map(str, cp_row)) + "\n")
 
 if __name__ == "__main__":
-    initiate_sample_data_file(test_example=True)
-    if len(sys.argv) != 2 :
-        print("invalid arg list for execution!")
-        exit()
     
-    file_path = sys.argv[1]
-    print(f"data path = {file_path}")
+    mat = [
+        [0,0,0,0,0],
+        [1,0,0,1,0],
+        [0,0,0,1,0],
+        [1,0,0,0,1],
+        [0,0,1,0,0],
+    ]
+    T = [5,7,1,9,7]
+    G = [3,7,1,5,6]
     
-    data,T,G = read_data_file(path=file_path,p_flag=False)
-    N = data.shape[0]
-    
-    tar = TarjanSCC(data,T,G)
-    
-    
-    print(f"\nadj_mat : \n{data}\n")
-    print(f"\nadj_list : ")
-    for l in tar.adj_list:
-        print(l)
-    print(f"\nT : {T}")
-    print(f"G : {G}")
-    print(f"N : {N}")
-    
-    lows = tar.count_SCC(P_flag=False)
-    
-    print(f"\nlow link values : {lows}")
-    print(f"\nSCCs : ")
-    for scc in tar.SCCs:
-        print(scc)
-    
-    tar.get_Boards_from_SCCs()
-    tar.build_board_graph()
-    
-    print(tar.board_adj)
-    print(f"\nboard_adj : ")
-    for l in tar.board_adj:
-        print(l)
-    
-    max_time =  tar.max_time_over_all_boards()
-    
-    print(f'\nmax_time : {max_time}')
-    
-    #! remove before submission , will be graded 0!!!
-    # G = nx.DiGraph(data)
-    # nx.draw(G,with_labels=True,pos=nx.circular_layout(G))
-    # plt.show()
-    
-    # get_path(data,0,4)
+    for i in range(len(mat)) :
+        mat[i][i] = (T[i],G[i])
     
     
+    # initiate_sample_data_file(path = "./input.txt", N = 20 , p = 0.09 , test_example=True,init_mat=mat)
+    
+    main()
