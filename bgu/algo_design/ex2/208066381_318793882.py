@@ -1,9 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import sys
-
-import networkx as nx #! remove before submission , will be graded 0!!!
-
 
 def initiate_sample_data_file(path = "./input.txt",N = 10 ,p = 0.25,test_example = True,p_flag=False,init_mat=None):
     if init_mat is not None :
@@ -63,13 +59,13 @@ class Task:
 class Board:
     def __init__(self, board_id, members, tasks_map):
         self.id = board_id
-        self.members = sorted(members)  # List of task IDs in this board
-        self.rep = self.members[0]      # Smallest review ID
+        self.members = sorted(members)  
+        self.rep = self.members[0]      
         self.duration = 0
         self.internal_order = []
         self.start_time = 0
         self.finish_time = 0
-        self.tasks_map = tasks_map      # Reference to global task dict
+        self.tasks_map = tasks_map      
         
         self._calculate_schedule()
 
@@ -326,19 +322,18 @@ def main():
 
 if __name__ == "__main__":
     
-    mat = [
-        [0,0,0,0,0],
-        [1,0,0,1,0],
-        [0,0,0,1,0],
-        [1,0,0,0,1],
-        [0,0,1,0,0],
-    ]
-    T = [5,7,1,9,7]
-    G = [3,7,1,5,6]
+    # mat = [
+    #     [0,0,0,0,0],
+    #     [1,0,0,1,0],
+    #     [0,0,0,1,0],
+    #     [1,0,0,0,1],
+    #     [0,0,1,0,0],
+    # ]
+    # T = [5,7,1,9,7]
+    # G = [3,7,1,5,6]
     
-    for i in range(len(mat)) :
-        mat[i][i] = (T[i],G[i])
-    
+    # for i in range(len(mat)) :
+    #     mat[i][i] = (T[i],G[i])
     
     # initiate_sample_data_file(path = "./input.txt", N = 20 , p = 0.09 , test_example=True,init_mat=mat)
     
