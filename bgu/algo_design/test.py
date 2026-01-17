@@ -1,5 +1,7 @@
 from collections import deque
 from typing import Deque, Tuple, List, Dict
+import numpy as np
+import matplotlib.pyplot as plt
 
 class Node():
     def __init__(self, value, left=None, right=None):
@@ -73,48 +75,76 @@ def print_tree(root: Node, prefix: str = "", is_left: bool = True):
         new_prefix = prefix + ("    " if is_left else "|   ")
         print_tree(root.left, new_prefix, True)
 
+def EWMA(sampleRTT,alpha = 0.125,beta = 0.25,margin = 4):
+    estimatedRTT = 0
+    devRTT = 0
+    output = np.zeros_like(sampleRTT)
+    for i in range(len(sampleRTT)):
+        estimatedRTT = (1-alpha) * estimatedRTT + alpha * sampleRTT[i]
+        devRTT = (1-beta) * devRTT + beta * abs(sampleRTT[i] - estimatedRTT)
+        output[i] = estimatedRTT + margin * devRTT
+        
+    return output
+
 if __name__ == "__main__":
-    char_tokens = False 
+    var = 5
+    N = 1000
+    arr = abs(np.random.randn(N) * var)
+    # arr = np.random.exponential(1,N) * var
     
-    try:
-        with open("./data.txt","r") as f:
-            text = f.read()[:50]
-    except FileNotFoundError:
-        print("Error: data.txt not found. Using sample text instead.")
-        text = "this is a sample text for huffman coding"
+    estimate = EWMA(arr,margin=4)
     
-    if not char_tokens:
-        text = text.split(sep=" ")
+    plt.scatter(np.arange(N), arr,c="red",s = 1.5)
+    plt.plot(np.arange(N), estimate)
+    plt.show()
     
-    counter = {}
-    for char in text:
-        if counter.get(char,0) == 0 :
-            counter[char] = 1
-        else :
-            counter[char] += 1
+    
+
+
+
+
+# if __name__ == "__main__":
+#     char_tokens = False 
+    
+#     try:
+#         with open("./data.txt","r") as f:
+#             text = f.read()[:50]
+#     except FileNotFoundError:
+#         print("Error: data.txt not found. Using sample text instead.")
+#         text = "this is a sample text for huffman coding"
+    
+#     if not char_tokens:
+#         text = text.split(sep=" ")
+    
+#     counter = {}
+#     for char in text:
+#         if counter.get(char,0) == 0 :
+#             counter[char] = 1
+#         else :
+#             counter[char] += 1
         
     
-    sorted_items = sorted(counter.items(), key=lambda x: x[1])
-    for key, val in sorted_items:
-        print(f"'{repr(key)}': {val}", end=' | ')
-    print('\n')
+#     sorted_items = sorted(counter.items(), key=lambda x: x[1])
+#     for key, val in sorted_items:
+#         print(f"'{repr(key)}': {val}", end=' | ')
+#     print('\n')
 
-    q1: Deque[Node] = deque([Node(count) for count in sorted_items]) 
-    q2: Deque[Node] = deque() 
+#     q1: Deque[Node] = deque([Node(count) for count in sorted_items]) 
+#     q2: Deque[Node] = deque() 
 
-    while len(q1) + len(q2) > 1:
-        min1, min2 = extract_2_min(q1, q2)
-        left = min([min1, min2], key=lambda x: x.value[1])
-        right = max([min1, min2], key=lambda x: x.value[1])
+#     while len(q1) + len(q2) > 1:
+#         min1, min2 = extract_2_min(q1, q2)
+#         left = min([min1, min2], key=lambda x: x.value[1])
+#         right = max([min1, min2], key=lambda x: x.value[1])
         
-        c = Node((min1.value[0] + min2.value[0], min1.value[1] + min2.value[1]), left=left, right=right)
-        q2.append(c)
+#         c = Node((min1.value[0] + min2.value[0], min1.value[1] + min2.value[1]), left=left, right=right)
+#         q2.append(c)
 
-    root = q1.pop() if q1 else q2.pop()
+#     root = q1.pop() if q1 else q2.pop()
 
-    print_tree(root)
+#     print_tree(root)
 
-    encoding: Dict[str, str] = get_char_encoding(root=root, encoding={})
+#     encoding: Dict[str, str] = get_char_encoding(root=root, encoding={})
     
-    for char, code in sorted(encoding.items(), key=lambda item: len(item[1])):
-        print(f"'{repr(char)}': {code}")
+#     for char, code in sorted(encoding.items(), key=lambda item: len(item[1])):
+#         print(f"'{repr(char)}': {code}")
