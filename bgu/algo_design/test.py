@@ -1,150 +1,108 @@
-from collections import deque
-from typing import Deque, Tuple, List, Dict
-import numpy as np
-import matplotlib.pyplot as plt
+import random
+import math
+# class Node():
+#     def __init__(self, value, left=None, right=None):
+#         self.value = value
+#         self.left = left
+#         self.right = right
 
-class Node():
-    def __init__(self, value, left=None, right=None):
-        self.value = value
-        self.left = left
-        self.right = right
+# def inorder(root):
+#     if root.right is None and root.left is None:
+#         print(f"leaf : {root.value[0]} (Freq: {root.value[1]})")
+#         return
 
-def inorder(root):
-    if root.right is None and root.left is None:
-        print(f"leaf : {root.value[0]} (Freq: {root.value[1]})")
-        return
+#     if root.left is not None:
+#         inorder(root.left)
+#     if root.right is not None :
+#         inorder(root.right)
 
-    if root.left is not None:
-        inorder(root.left)
-    if root.right is not None :
-        inorder(root.right)
 
-def get_char_encoding(root: Node, encoded_value: str = "", encoding: dict[str, str] = None) -> dict[str, str]:
-    if encoding is None:
-        encoding = {}
 
-    if root.left is None and root.right is None:
-        char = root.value[0]
-        encoding[char] = encoded_value
-        return encoding
+def opt_solution_1(A):
+    """dynamic programming
+    given an array of positive integers A = [a1...an]
+    return a partition of the array as partition indices 
+    such that the sum of the products of the partition is maximal.
+    alg. should run in O(N^2) time.
+
+    Args:
+        A (list[int]): array of positive integers
+
+    Returns:
+        P ([list[int]]): array of partition indices
+        max (int): sum of products of the partition
+    """
+    N = len(A)
+    DP = [0] * ( N + 1)
+    indices = [0] * ( N + 1)
+    
+    
+    for i in range(1,N+1):
+        DP_max = -float("inf")
+        p_curr = 1
+        val = 0
+        for j in range(i,0,-1):
+            
+            p_curr *= A[j-1]
+            val = DP[j-1] + p_curr
+            
+            if DP_max < val :
+                DP_max = val
+                indices[i] = j
+                
+        DP[i] = DP_max
+    
+    partition = []
+    idx_curr = N
+    while idx_curr > 0 :
+        start = indices[idx_curr]
+        partition.append(A[start-1:idx_curr])
+        idx_curr = start - 1
+    
+    return DP[N],partition[::-1]
+
+def i_j_maxdist(A,p_flag = False):
+    """
+    - for a given array of integers A = [a1...an]
+    
+    - return the largest distance in the array a_i - a_j  s.t. i<j 
+    
+    - algorithm should do so in O(N) time.
+    """
+    N = len(A)
+    current_max = 0 
+    a_max = 0
+    a_min = 0
+    
+    for i in range(N):
+        if A[i] > A[a_max] :
+            a_max = i
+            a_min = i
+            current_max = A[a_max] - A[a_min]
+            
+        if A[i] < A[a_min] :
+            a_min = i
+            current_max = A[a_max] - A[a_min]
         
-    if root.left is not None:
-        get_char_encoding(root.left, encoded_value + "0", encoding)
+        if p_flag:
+            print(A)
+            print(f"A[a_max] : {A[a_max]}")
+            print(f"A[a_min] : {A[a_min]}")
+            print(f"current_max : {current_max}\n")
         
-    if root.right is not None:
-        get_char_encoding(root.right, encoded_value + "1", encoding)
-        
-    return encoding
-
-def get_min_node(q1: Deque[Node], q2: Deque[Node]) -> Node:
-    if not q1 and not q2:
-        raise ValueError("Both queues are empty; cannot extract.")
+    return a_max,a_min,current_max
     
-    if not q2:
-        return q1.popleft()
-    
-    if not q1:
-        return q2.popleft()
-    
-    freq1 = q1[0].value[1]
-    freq2 = q2[0].value[1]
-    
-    if freq1 <= freq2:
-        return q1.popleft()
-    else:
-        return q2.popleft()
-
-def extract_2_min(q1: deque[Node], q2: deque[Node]) -> tuple[Node, Node]:
-    min1 = get_min_node(q1, q2)
-    min2 = get_min_node(q1, q2)
-    return min1, min2
-
-def print_tree(root: Node, prefix: str = "", is_left: bool = True):
-    if root is None:
-        return
-
-    if root.right is not None:
-        new_prefix = prefix + ("|   " if is_left else "    ")
-        print_tree(root.right, new_prefix, False)
-
-    node_value_str = f"'{repr(root.value[0])}' ({root.value[1]})"
-    
-    print(prefix + ("└── " if is_left else "┌── ") + node_value_str)
-
-    if root.left is not None:
-        new_prefix = prefix + ("    " if is_left else "|   ")
-        print_tree(root.left, new_prefix, True)
-
-def EWMA(sampleRTT,alpha = 0.125,beta = 0.25,margin = 4):
-    estimatedRTT = 0
-    devRTT = 0
-    output = np.zeros_like(sampleRTT)
-    for i in range(len(sampleRTT)):
-        estimatedRTT = (1-alpha) * estimatedRTT + alpha * sampleRTT[i]
-        devRTT = (1-beta) * devRTT + beta * abs(sampleRTT[i] - estimatedRTT)
-        output[i] = estimatedRTT + margin * devRTT
-        
-    return output
-
 if __name__ == "__main__":
-    var = 5
-    N = 1000
-    arr = abs(np.random.randn(N) * var)
-    # arr = np.random.exponential(1,N) * var
+    N = 10 
+    # random.seed(42)
+    A = [abs(math.floor(random.normalvariate(mu=0,sigma=N))) for i in range(N)]
     
-    estimate = EWMA(arr,margin=4)
+    sequence = [2, 3, 0.5, 4] # Using some floats to show variety, though problem says integers
+    # If input is [1, 2, 1, 3]
+    sequence = [1, 2, 1, 3]
+    max_sum , partition = opt_solution_1(A)
+
+    print(f"A: {A}")
+    print(f"max_sum: {max_sum}")
+    print(f"partition: {partition}")
     
-    plt.scatter(np.arange(N), arr,c="red",s = 1.5)
-    plt.plot(np.arange(N), estimate)
-    plt.show()
-    
-    
-
-
-
-
-# if __name__ == "__main__":
-#     char_tokens = False 
-    
-#     try:
-#         with open("./data.txt","r") as f:
-#             text = f.read()[:50]
-#     except FileNotFoundError:
-#         print("Error: data.txt not found. Using sample text instead.")
-#         text = "this is a sample text for huffman coding"
-    
-#     if not char_tokens:
-#         text = text.split(sep=" ")
-    
-#     counter = {}
-#     for char in text:
-#         if counter.get(char,0) == 0 :
-#             counter[char] = 1
-#         else :
-#             counter[char] += 1
-        
-    
-#     sorted_items = sorted(counter.items(), key=lambda x: x[1])
-#     for key, val in sorted_items:
-#         print(f"'{repr(key)}': {val}", end=' | ')
-#     print('\n')
-
-#     q1: Deque[Node] = deque([Node(count) for count in sorted_items]) 
-#     q2: Deque[Node] = deque() 
-
-#     while len(q1) + len(q2) > 1:
-#         min1, min2 = extract_2_min(q1, q2)
-#         left = min([min1, min2], key=lambda x: x.value[1])
-#         right = max([min1, min2], key=lambda x: x.value[1])
-        
-#         c = Node((min1.value[0] + min2.value[0], min1.value[1] + min2.value[1]), left=left, right=right)
-#         q2.append(c)
-
-#     root = q1.pop() if q1 else q2.pop()
-
-#     print_tree(root)
-
-#     encoding: Dict[str, str] = get_char_encoding(root=root, encoding={})
-    
-#     for char, code in sorted(encoding.items(), key=lambda item: len(item[1])):
-#         print(f"'{repr(char)}': {code}")
