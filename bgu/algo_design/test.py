@@ -1,5 +1,8 @@
 import random
 import math
+import matplotlib.pyplot as plt
+import numpy as np
+import time
 # class Node():
 #     def __init__(self, value, left=None, right=None):
 #         self.value = value
@@ -92,17 +95,114 @@ def i_j_maxdist(A,p_flag = False):
         
     return a_max,a_min,current_max
     
-if __name__ == "__main__":
-    N = 10 
-    # random.seed(42)
-    A = [abs(math.floor(random.normalvariate(mu=0,sigma=N))) for i in range(N)]
+def min_2d_distance(A):
+    """
+    - for a given array of point in 2d plane A = [p1 = (x1,y1)...pn]
     
-    sequence = [2, 3, 0.5, 4] # Using some floats to show variety, though problem says integers
-    # If input is [1, 2, 1, 3]
-    sequence = [1, 2, 1, 3]
-    max_sum , partition = opt_solution_1(A)
+    - return the smallest distance in the array 
+    
+    - algorithm should do so in O(N*log(N)) time.
+    """
+    if len(A) <= 1:
+        return float("inf")
+    if len(A) == 2:
+        x1, y1 = A[0]
+        x2, y2 = A[1]
+        return ((x1 - x2)**2 + (y1 - y2)**2)**0.5
+    
+    median = len(A) // 2
+    mid_x = A[median][0]  # We need to explicitly capture the X-coordinate of our dividing line
+    
+    d_L = min_2d_distance(A[:median])
+    d_R = min_2d_distance(A[median:])
+    
+    d = min(d_L, d_R)  # This is our delta (δ)!
+    
+    # Step 1: Build the boundary strip (Filter out points too far from mid_x)
+    strip = [p for p in A if abs(p[0] - mid_x) < d]
+    
+    # Step 2: Sort the boundary strip purely by Y
+    strip.sort(key=lambda p: p[1])
+    
+    # Step 3: Iterate through the Y-sorted strip
+    for i in range(len(strip)):
+        # Look ahead at the subsequent points...
+        for j in range(i + 1, len(strip)):
+            
+            # THE MAGIC BREAK CONDITION:
+            # If the Y-distance exceeds 'd', stop checking for point 'i'!
+            # Mathematical packing guarantees this 'break' hits within 7 loops.
+            if strip[j][1] - strip[i][1] >= d:
+                break
+                
+            # If it's within the safe Y-distance, check the true 2D Euclidean distance
+            x1, y1 = strip[i]
+            x2, y2 = strip[j]
+            dist = ((x1 - x2)**2 + (y1 - y2)**2)**0.5
+            
+            # If we found a closer pair, update our delta!
+            if dist < d:
+                d = dist
+                
+    return d
+            
+def visualize_time_complexity():
+    # Different sizes of N to test
+    ns = [100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000]
+    times = []
 
-    print(f"A: {A}")
-    print(f"max_sum: {max_sum}")
-    print(f"partition: {partition}")
+    print("Running tests... This may take a few seconds.")
+    for n in ns:
+        # Generate N random coordinates in a 100,000 x 100,000 grid
+        A = [(random.uniform(0, 100000), random.uniform(0, 100000)) for _ in range(n)]
+        
+        # PRE-SORT by X coordinate (as our function expects)
+        A.sort(key=lambda p: p[0])
+        
+        # Start the clock
+        start_time = time.perf_counter()
+        min_2d_distance(A)
+        end_time = time.perf_counter()
+        
+        # Record the elapsed time
+        elapsed = end_time - start_time
+        times.append(elapsed)
+        print(f"N = {n:5d} | Time = {elapsed:.4f} seconds")
+
+    # Generate the Matplotlib Graph
+    plt.plot(ns, times, marker='o', linestyle='-', color='#2ca02c', linewidth=2, markersize=6)
+    plt.title('Runtime of Closest Pair of Points ($O(N \log^2 N)$)')
+    plt.xlabel('Number of Points ($N$)')
+    plt.ylabel('Execution Time (seconds)')
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+def lumberjacks(C:list[int],L:int):
+    C = [0] + C + [L]
+    print(f"C : {C}")
     
+    N = len(C)
+    DP = [[0]*N for i in range(N)]
+    
+    for length in range(2,N):
+        for i in range(N-length):
+            
+            j = i + length
+            DP[i][j] = float("inf")
+            
+            for k in range(i+1,j):
+                current_val = C[j] - C[i] + DP[i][k] + DP[k][j]
+                DP[i][j] = current_val if current_val < DP[i][j] else current_val
+    return DP,DP[0][N-1]
+    
+if __name__ == "__main__":
+    L = 20
+    K = 5
+    p = 0.2
+    C = [i for i in range(1,L) if random.random() < p]
+    solution = lumberjacks(C,L)
+    print(f"solution : {solution[1]}")
+    print(f"DP : ")
+    for line in solution[0]:
+        print(line)

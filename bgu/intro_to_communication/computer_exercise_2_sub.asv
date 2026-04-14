@@ -1,0 +1,451 @@
+% =========================================================================
+% DIGITAL COMMUNICATIONS ASSIGNMENT
+% =========================================================================
+clear; clc; close all;
+
+% =========================================================================
+% SECTION 2.1: Single Carrier QAM
+% =========================================================================
+
+% --- 2.1.1: 4-QAM SER vs SNR (Waterfall Curve) ---
+disp('Running Section 2.1.1: 4-QAM SER vs SNR...');
+Es = 1; 
+N = 1e5;
+p1 = 0.5;
+SNR_s = -6 : 6;
+SER = zeros(1,length(SNR_s));
+
+for i = 1 : length(SNR_s)
+    SNRb_DB = SNR_s(i);
+    SNRb = 10^(SNRb_DB/10);
+    [S,Y] = QAM4_Rec(SNRb, Es, N, p1);
+    S_dec = QAM4_SymMAPDec(Y, SNRb, Es, p1);
+    SER(i) = CompSER(S,S_dec);
+end 
+
+disp('SNR (dB):'); disp(SNR_s);
+disp('SER:'); disp(SER);
+
+figure;
+semilogy(SNR_s, SER, '-o');
+grid on;
+title('Section 2.1.1: 4-QAM SER vs SNR');
+xlabel('SNR_b (dB)'); ylabel('Symbol Error Rate');
+
+
+% --- 2.1.2: 4-QAM SER vs Prior Probability (p1) ---
+disp('Running Section 2.1.2: 4-QAM SER vs Prior Probability...');
+p1_s = 0.01: 0.01 : 0.99;
+SER_p = zeros(1,length(p1_s));
+SNRb_DB_fixed = -3;
+
+for i = 1 : length(p1_s)
+    p_curr = p1_s(i);
+    SNRb = 10^(SNRb_DB_fixed/10);
+    [S,Y] = QAM4_Rec(SNRb, Es, N, p_curr);
+    S_dec = QAM4_SymMAPDec(Y, SNRb, Es, p_curr);
+    SER_p(i) = CompSER(S,S_dec);
+end 
+
+figure;
+plot(p1_s, SER_p, '-o');
+grid on;
+title('Section 2.1.2: 4-QAM SER vs p1 (SNR = -3dB)');
+xlabel('Prior Probability p1'); ylabel('Symbol Error Rate');
+
+
+% --- 2.1.3: 8-QAM SER vs SNR (Simulation vs Theory) ---
+disp('Running Section 2.1.3: 8-QAM SER vs SNR...');
+Nsym = 1e5;
+SNR_dB_8QAM = -25 : 1 : 0;
+SER_Sim = zeros(1, length(SNR_dB_8QAM));
+SER_Theory = zeros(1, length(SNR_dB_8QAM));
+
+for i = 1 : length(SNR_dB_8QAM)
+    snr_db_val = SNR_dB_8QAM(i);
+    SNRb = 10^(snr_db_val/10);
+    
+    S = QAM8SymVec(Nsym, Es);
+    Y = QAM8_Rec(S, SNRb, Es);
+    S_dec = QAM8_SymMAPDec(Y, Es);
+    
+    SER_Sim(i) = CompSER(S, S_dec);
+    SER_Theory(i) = 2.5 * 0.5 * erfc(sqrt(SNRb)/sqrt(2));
+end 
+
+figure;
+hold on;
+semilogy(SNR_dB_8QAM, SER_Sim, 'bo-', 'LineWidth', 1.5); 
+semilogy(SNR_dB_8QAM, SER_Theory, 'r--', 'LineWidth', 1.5);
+semilogy(SNR_dB_8QAM, abs(SER_Theory - SER_Sim), 'k--', 'LineWidth', 1.5);
+grid on;
+title('Section 2.1.3: 8-QAM SER vs SNR_b');
+xlabel('SNR_b [dB]'); ylabel('Symbol Error Rate');
+legend('Simulation', 'Approximation','Difference', 'Location', 'southwest');
+axis([-25 0 0.5e-1 1.5]);
+
+
+% =========================================================================
+% SECTION 2.2: OFDM Simulation
+% =========================================================================
+disp('Running Section 2.2: OFDM Simulation...');
+
+% --- Parameters ---
+Nsc = 64;           
+Ncp = 16;           
+constellation = '4QAM'; 
+num_ofdm_syms = 1000; % Total OFDM symbols to simulate
+SNR_vec = 0:2:30;     % Extended range to see error floors
+
+% --- Define Channels (Modified to use a1 and a2 as required) ---
+% Channel 1: AWGN (Reference)
+h_awgn = 1; 
+
+% Channel 2: Acoustic Channel 1 (a1)
+% Note: Normalized to unit energy to ensure fair comparison
+a1 = 1/10.2424 * [8.1, 2.3, 5, 2.3, 1.9, 0.5];
+h_a1 = a1 / norm(a1); 
+
+% Channel 3: Acoustic Channel 2 (a2)
+a2 = 1/11.4648 * [8.1, 2.3, 5, 2.3, 1.9, 0.5, 3, 1.1, 0.9, 0.35, 1.5, 2, 3];
+h_a2 = a2 / norm(a2);
+
+% --- Initialize Results ---
+BER_awgn = zeros(size(SNR_vec));
+BER_a1   = zeros(size(SNR_vec));
+BER_a2   = zeros(size(SNR_vec));
+
+% Determine bits per symbol
+if strcmp(constellation, '4QAM'), M=2; elseif strcmp(constellation, '8QAM'), M=3; else, M=1; end
+Nbits = num_ofdm_syms * Nsc * M;
+
+% --- Simulation Loop ---
+for i = 1:length(SNR_vec)
+    current_SNR = SNR_vec(i);
+    
+    % Generate Bits and Transmitter
+    bits_tx = randi([0 1], 1, Nbits);
+    x_tx = OFDM_Mod(bits_tx, Nsc, Ncp, constellation);
+    
+    % 1. AWGN Simulation
+    rx_sig1 = OFDM_Channel(x_tx, h_awgn, current_SNR);
+    bits_rx1 = OFDM_Demod(rx_sig1, Nsc, Ncp, constellation, h_awgn);
+    BER_awgn(i) = sum(abs(bits_tx - bits_rx1(1:Nbits))) / Nbits;
+    
+    % 2. Channel a1 Simulation (Modified to use a1)
+    rx_sig2 = OFDM_Channel(x_tx, h_a1, current_SNR);
+    bits_rx2 = OFDM_Demod(rx_sig2, Nsc, Ncp, constellation, h_a1);
+    BER_a2(i) = sum(abs(bits_tx - bits_rx2(1:Nbits))) / Nbits; % Stored in BER_a1/a2 var name
+    BER_a1(i) = sum(abs(bits_tx - bits_rx2(1:Nbits))) / Nbits;
+
+    % 3. Channel a2 Simulation (Modified to use a2)
+    rx_sig3 = OFDM_Channel(x_tx, h_a2, current_SNR);
+    bits_rx3 = OFDM_Demod(rx_sig3, Nsc, Ncp, constellation, h_a2);
+    BER_a2(i) = sum(abs(bits_tx - bits_rx3(1:Nbits))) / Nbits;
+end
+
+% --- Plotting Section 2.2 Results ---
+figure;
+semilogy(SNR_vec, BER_awgn, '-bo', 'LineWidth', 2, 'MarkerSize', 6); hold on;
+semilogy(SNR_vec, BER_a1, '-rx', 'LineWidth', 2, 'MarkerSize', 6);
+semilogy(SNR_vec, BER_a2, '-g^', 'LineWidth', 2, 'MarkerSize', 6);
+grid on;
+xlabel('SNR (dB)');
+ylabel('Bit Error Rate (BER)');
+title(['OFDM BER Performance (' constellation ')']);
+legend('AWGN', 'Channel a1', 'Channel a2');
+ylim([1e-5 1]);
+
+%% Question 2.2.8
+%% Question 2.2.8: BER vs Eb/N0 Comparison (Channels 1 & 2)
+% [cite: 102, 241] - Comparison of BPSK and 4QAM over Channel 1 and 2
+disp('Running Section 2.2.8: BER vs Eb/N0 Comparison...');
+
+% 1. Setup Parameters
+EbN0_dB_range = -10:2:20; %  Range specified in instructions
+N_sim_bits = 1e5;         %  Sufficient for error counting
+
+% Pre-allocate BER arrays
+BER_Ch1_BPSK = zeros(size(EbN0_dB_range));
+BER_Ch2_BPSK = zeros(size(EbN0_dB_range));
+BER_Ch1_4QAM = zeros(size(EbN0_dB_range));
+BER_Ch2_4QAM = zeros(size(EbN0_dB_range));
+
+% 2. Simulation Loop
+for k = 1:length(EbN0_dB_range)
+    EbN0_val_dB = EbN0_dB_range(k);
+    EbN0_lin = 10^(EbN0_val_dB/10);
+
+    % --- BPSK Simulation (M=1) ---
+    M_BPSK = 1; 
+    Es_BPSK = 1; 
+    % Note: Since ||a1|| = ||a2|| = 1, SNR = Es/N0. 
+    % N0 = Es / (EbN0 * log2(M))
+    N0_BPSK = Es_BPSK / (EbN0_lin * M_BPSK); 
+
+    bits_BPSK = BitVec(N_sim_bits, 0.5);
+    x_BPSK = OFDM_Mod(bits_BPSK, Nsc, Ncp, 'BPSK');
+
+    % Wireless Channel (Returns outputs for both channels) 
+    [r1_BPSK, r2_BPSK] = Wireless_Channel(x_BPSK, N0_BPSK);
+
+    % Demodulate Channel 1 [cite: 234]
+    bits_rx_Ch1 = OFDM_Demod(r1_BPSK, Nsc, Ncp, 'BPSK', 1);
+    % Demodulate Channel 2 [cite: 238]
+    bits_rx_Ch2 = OFDM_Demod(r2_BPSK, Nsc, Ncp, 'BPSK', 2);
+
+    % Calculate BER (Truncate to match transmitted length)
+    len_b = length(bits_BPSK);
+    BER_Ch1_BPSK(k) = mean(bits_BPSK ~= bits_rx_Ch1(1:len_b));
+    BER_Ch2_BPSK(k) = mean(bits_BPSK ~= bits_rx_Ch2(1:len_b));
+
+    % --- 4QAM Simulation (M=2) ---
+    M_4QAM = 2; 
+    Es_4QAM = 1; 
+    N0_4QAM = Es_4QAM / (EbN0_lin * M_4QAM);
+
+    bits_4QAM = BitVec(N_sim_bits, 0.5);
+    x_4QAM = OFDM_Mod(bits_4QAM, Nsc, Ncp, '4QAM');
+
+    [r1_4QAM, r2_4QAM] = Wireless_Channel(x_4QAM, N0_4QAM);
+
+    bits_rx_Ch1_4 = OFDM_Demod(r1_4QAM, Nsc, Ncp, '4QAM', 1);
+    bits_rx_Ch2_4 = OFDM_Demod(r2_4QAM, Nsc, Ncp, '4QAM', 2);
+
+    len_4 = length(bits_4QAM);
+    BER_Ch1_4QAM(k) = mean(bits_4QAM ~= bits_rx_Ch1_4(1:len_4));
+    BER_Ch2_4QAM(k) = mean(bits_4QAM ~= bits_rx_Ch2_4(1:len_4));
+end
+
+% 3. Plotting 
+figure;
+hold on;
+semilogy(EbN0_dB_range, BER_Ch1_BPSK, '-bo', 'LineWidth', 1.5, 'DisplayName', 'BPSK Ch 1'); 
+semilogy(EbN0_dB_range, BER_Ch2_BPSK, '--b^', 'LineWidth', 1.5, 'DisplayName', 'BPSK Ch 2');
+semilogy(EbN0_dB_range, BER_Ch1_4QAM, '-rs', 'LineWidth', 1.5, 'DisplayName', '4QAM Ch 1');
+semilogy(EbN0_dB_range, BER_Ch2_4QAM, '--rd', 'LineWidth', 1.5, 'DisplayName', '4QAM Ch 2');
+grid on;
+xlabel('E_b/N_0 (dB)');
+ylabel('Bit Error Rate (BER)');
+title('Section 2.2.8: BER vs E_b/N_0 for Channels 1 & 2');
+legend('Location','southwest');
+hold off 
+% --- Optional Analysis: Channel Frequency Response ---
+% This explains WHY a1 or a2 might have bad performance (Spectral Nulls)
+% figure;
+% subplot(2,1,1);
+% stem(abs(fft(h_a1, Nsc)), 'r', 'LineWidth', 2);
+% title('Frequency Response: Channel a1'); grid on; ylabel('|H[k]|');
+% subplot(2,1,2);
+% stem(abs(fft(h_a2, Nsc)), 'g', 'LineWidth', 2);
+% title('Frequency Response: Channel a2'); grid on; ylabel('|H[k]|');
+% xlabel('Subcarrier Index');
+
+% =========================================================================
+% DEBUG PLOTS (Commented out as requested - enable if needed for verification)
+% =========================================================================
+% if false 
+%     % Test single transmission
+%     figure; plot(abs(x_tx(1:100))); title('Debug: Tx Signal Time Domain');
+% end
+
+% =========================================================================
+% HELPER FUNCTIONS
+% =========================================================================
+
+% --- Section 2.1 Helpers ---
+function bit_vec = BitVec(Nbit,pbit)
+    bit_vec = rand(1,Nbit) < pbit ;
+end
+
+function sym_vec = QAM4SymVec(bit_vec,Es)
+    L = length(bit_vec);
+    sym_vec = zeros(1,L/2) ;
+    for i = 1 : L/2
+        a = bit_vec(2*i-1);
+        b = bit_vec(2*i);
+        s = (-1)^a + (-1)^b * 1i ;
+        sym_vec(i) = s / abs(s) * sqrt(Es); 
+    end 
+end
+
+function [sym_vec_tx,yvec] = QAM4_Rec(SNRb, Es, Nbit, pbit)
+    Eb = Es / 2;
+    N0 = Eb / SNRb;
+    B = BitVec(Nbit,pbit);
+    sym_vec_tx = QAM4SymVec(B,Es);
+    Ns = length(sym_vec_tx);
+    CSCN = randn(1,Ns) + randn(1,Ns) * 1i;
+    yvec = sym_vec_tx + CSCN * sqrt(N0/2);
+end 
+
+function svecdec=QAM4_SymMAPDec(yvec, SNRb, Es, pbit)
+    svecdec = zeros(1,length(yvec));
+    P = [ (1-pbit)^2 , (1-pbit)*pbit , (pbit)^2 , (1-pbit)*pbit ];
+    Eb = Es / 2;
+    N0 = Eb / SNRb; 
+    bias_Re = N0/2 * log(P(3)/P(2)); 
+    bias_Im = N0/2 * log(P(2)/P(1));
+    for i = 1 : length(yvec)
+        y = yvec(i);
+        a = real(y);
+        b = imag(y);
+        s_raw = (-1)^((a >= bias_Re)+1) + (-1)^((b >= bias_Im)+1) * 1i;
+        svecdec(i) = s_raw / abs(s_raw) * sqrt(Es);
+    end
+end
+
+function ser=CompSER(sym_vec_tx,svecdec)
+    ser = 1 - sum(abs(sym_vec_tx - svecdec) < 1e-5) / length(sym_vec_tx);
+end
+
+function sym_vec = QAM8SymVec(Nsym, Es)
+    sqEs = sqrt(Es);
+    S0 =  sqEs + 1i*(sqEs/2); S1 =  sqEs - 1i*(sqEs/2);
+    S2 =  (sqEs/2) + 1i*0;    S3 =  0 + 1i*(sqEs/2);
+    S4 =  0 - 1i*(sqEs/2);    S5 = -(sqEs/2) + 1i*0;
+    S6 = -sqEs + 1i*(sqEs/2); S7 = -sqEs - 1i*(sqEs/2);
+    Constellation = [S0, S1, S2, S3, S4, S5, S6, S7];
+    indices = randi([1, 8], 1, Nsym);
+    sym_vec = Constellation(indices);
+end
+
+function yvec = QAM8_Rec(sym_vec8, SNRb, Es)
+    E_avg = 0.75 * Es;
+    Eb = E_avg / 3;
+    N0 = Eb / SNRb;
+    Ns = length(sym_vec8);
+    noise = (randn(1, Ns) + 1i*randn(1, Ns)) * sqrt(N0/2);
+    yvec = sym_vec8 + noise;
+end 
+
+function svecdec = QAM8_SymMAPDec(yvec, Es)
+    sqEs = sqrt(Es);
+    Constellation = [ ...
+         (sqEs + 1i*sqEs/2), (sqEs - 1i*sqEs/2), (sqEs/2 + 1i*0), ...
+         (0 + 1i*sqEs/2), (0 - 1i*sqEs/2), (-sqEs/2 + 1i*0), ...
+         (-sqEs + 1i*sqEs/2), (-sqEs - 1i*sqEs/2) ];
+    svecdec = zeros(1, length(yvec));
+    for i = 1 : length(yvec)
+        y = yvec(i);
+        [~, idx] = min(abs(y - Constellation).^2);
+        svecdec(i) = Constellation(idx);
+    end
+end
+
+% --- Section 2.2 Helpers (OFDM) ---
+function xofdm = OFDM_Mod(bit_stream, Nsc, Ncp, constellation)
+    if strcmp(constellation, 'BPSK')
+        M_bits = 1; Es = 1; map_func = @(b) (2*b - 1) * sqrt(Es);
+    elseif strcmp(constellation, '4QAM')
+        M_bits = 2; map_func = @QAM4_Mapper;
+    elseif strcmp(constellation, '8QAM')
+        M_bits = 3; map_func = @QAM8_Mapper;
+    else
+        error('Invalid constellation type');
+    end
+    bits_per_ofdm = M_bits * Nsc;
+    L = length(bit_stream);
+    remainder = mod(L, bits_per_ofdm);
+    if remainder ~= 0
+        pad_len = bits_per_ofdm - remainder;
+        padding = randi([0 1], 1, pad_len);
+        bit_stream = [bit_stream, padding];
+    end
+    num_bits = length(bit_stream);
+    num_syms = num_bits / M_bits;
+    m = num_syms / Nsc;
+    const_symbols = zeros(1, num_syms);
+    for i = 1:num_syms
+        b_idx = (i-1)*M_bits + 1;
+        bits = bit_stream(b_idx : b_idx+M_bits-1);
+        const_symbols(i) = map_func(bits);
+    end
+    sym_matrix_freq = reshape(const_symbols, Nsc, m).'; 
+    input_to_ifft = sym_matrix_freq.'; 
+    time_matrix = ifft(input_to_ifft) * sqrt(Nsc);
+    cp_part = time_matrix(end-Ncp+1:end, :);
+    ofdm_syms_parallel = [cp_part; time_matrix];
+    xofdm = ofdm_syms_parallel(:).'; 
+end
+
+function [r_noisy, noise_var] = OFDM_Channel(xofdm, h, SNR_dB)
+    r_clean = conv(xofdm, h);
+    sig_power = mean(abs(r_clean).^2);
+    SNR_linear = 10^(SNR_dB / 10);
+    noise_power = sig_power / SNR_linear;
+    noise_scale = sqrt(noise_power / 2);
+    noise = noise_scale * (randn(size(r_clean)) + 1i * randn(size(r_clean)));
+    r_noisy = r_clean + noise;
+    noise_var = noise_power;
+end
+
+function rx_bits = OFDM_Demod(r_noisy, Nsc, Ncp, constellation, h)
+    len_sym = Nsc + Ncp;
+    L_rx = length(r_noisy);
+    m = floor(L_rx / len_sym); 
+    r_sync = r_noisy(1 : m * len_sym);
+    r_parallel = reshape(r_sync, len_sym, m);
+    r_no_cp = r_parallel(Ncp+1:end, :); 
+    Y_rx = fft(r_no_cp) / sqrt(Nsc); 
+    H = fft(h, Nsc).'; 
+    H_grid = repmat(H, 1, m);
+    
+    % Zero Forcing Equalizer
+    Y_eq = Y_rx ./ H_grid;
+    
+    [ideal_points, bit_map] = get_constellation_map(constellation);
+    M_bits = log2(length(ideal_points));
+    Y_seq = Y_eq(:).'; 
+    num_total_syms = length(Y_seq);
+    rx_bits = zeros(1, num_total_syms * M_bits);
+    for i = 1:num_total_syms
+        received_sym = Y_seq(i);
+        distances = abs(received_sym - ideal_points);
+        [~, min_idx] = min(distances);
+        detected_bits = bit_map(min_idx, :);
+        b_start = (i-1)*M_bits + 1;
+        rx_bits(b_start : b_start+M_bits-1) = detected_bits;
+    end
+end
+
+function [points, bit_table] = get_constellation_map(type)
+    if strcmp(type, 'BPSK')
+        bit_table = [0; 1]; Es = 1;
+        points = [(2*0-1)*sqrt(Es), (2*1-1)*sqrt(Es)];
+    elseif strcmp(type, '4QAM')
+        bit_table = [0 0; 0 1; 1 0; 1 1];
+        points = zeros(1,4);
+        for k=1:4, points(k) = QAM4_Mapper(bit_table(k,:)); end
+    elseif strcmp(type, '8QAM')
+        bit_table = de2bi(0:7, 3, 'left-msb'); 
+        points = zeros(1,8);
+        for k=1:8, points(k) = QAM8_Mapper(bit_table(k,:)); end
+    end
+end
+
+function s = QAM4_Mapper(bits)
+    val = bits(1)*2 + bits(2);
+    scale = 1/sqrt(2); 
+    switch val
+        case 0, s = (1 + 1i) * scale;
+        case 1, s = (1 - 1i) * scale;
+        case 3, s = (-1 - 1i) * scale;
+        case 2, s = (-1 + 1i) * scale;
+    end
+end
+
+function s = QAM8_Mapper(bits)
+    Es = 1; sqEs = sqrt(Es);
+    val = bits(1)*4 + bits(2)*2 + bits(3);
+    switch val
+        case 0, s = 0 + 1i*(sqEs/2);
+        case 1, s = sqEs + 1i*(sqEs/2);
+        case 3, s = sqEs - 1i*(sqEs/2);
+        case 2, s = 0 - 1i*(sqEs/2);
+        case 6, s = -sqEs - 1i*(sqEs/2);
+        case 7, s = -sqEs + 1i*(sqEs/2);
+        case 5, s = -(sqEs/2) + 1i*0;
+        case 4, s = (sqEs/2) + 1i*0;
+    end
+end
