@@ -1,6 +1,8 @@
 rust/testing/*
 rust/aoc_2023/*
 
-bgu/algo_design/208066381*
+python/test.ipynb
 
+bgu/algo_design/208066381*
 bgu/gen_models/*
+bgu/test.py
