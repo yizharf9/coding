@@ -15,14 +15,14 @@ ftype = 'bandpass';
 
 
 figure;
-semilogx(f/pi,mag2db(abs(h*fs )))
+semilogx(f/pi * fs,mag2db(abs(h*fs )))
 grid
 legend('TF Design')
 xlabel('Normalized Frequency (\times\pi rad/sample)')
 ylabel('Magnitude (dB)')
 
 figure;
-plot(f/pi,angle(h))
+plot(f/pi*fs,angle(h))
 grid
 legend('TF Design')
 xlabel('Normalized Frequency (\times\pi rad/sample)')
@@ -49,7 +49,7 @@ grid on;
 hold off ; 
 
 % first row is the poly with poles closest to unit circle
-[sos,g] = tf2sos(b,a,"down"); 
+[sos,g] = tf2sos(b,a,"up"); 
 disp('Initial sos Coefficient matrix (float32/64):');
 disp(sos)
 
@@ -66,27 +66,24 @@ disp(sos)
 b_coeffs = sos(:, 1:3);
 a_coeffs = sos(:, 4:6);
 
-% --- Distribute 'g' across the b coefficients ---
-% Since you have 3 stages, take the cube root of g
-g_per_stage = g^(1/3);
-
 % Multiply the b coefficients of every stage by this distributed gain
-b_coeffs_with_gain = b_coeffs * g_per_stage;
+scaling = 0.1;
+b_coeffs_with_gain = b_coeffs * scaling;
 
 % --- Quantize BOTH to Q15 ---
 [b_q15_binary, b_q15_math] = quantize_to_q15(b_coeffs_with_gain);
 [a_q15_binary, a_q15_math] = quantize_to_q15(a_coeffs);
 
-disp('NEW Scaled B Coefficients (Q15 Integer for C code):');
+disp('Scaled B Coefficients (Q15 Integer for C code):');
 % We need the raw integers to paste into C, not just the binary strings
-disp(round(b_coeffs_with_gain * 32768)); 
+disp(round(b_coeffs_with_gain* 32768)); 
+disp(b_q15_binary)
 
 disp('Unscaled A Coefficients (Q15 Integer for C code):');
 disp(round(a_coeffs * 32768));
-
-disp('Unscaled A Coefficients (Q15 Binary):');
 disp(a_q15_binary);
-disp(a_q15_math);
+
+
 
 
 
