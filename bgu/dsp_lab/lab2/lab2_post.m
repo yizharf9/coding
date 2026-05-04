@@ -15,14 +15,14 @@ ftype = 'bandpass';
 
 
 figure;
-semilogx(f/pi * fs,mag2db(abs(h*fs )))
+semilogx(f/pi * fs/2,mag2db(abs(h*fs )))
 grid
 legend('TF Design')
 xlabel('Normalized Frequency (\times\pi rad/sample)')
 ylabel('Magnitude (dB)')
 
 figure;
-plot(f/pi*fs,angle(h))
+plot(f/pi * fs/2,angle(h))
 grid
 legend('TF Design')
 xlabel('Normalized Frequency (\times\pi rad/sample)')
