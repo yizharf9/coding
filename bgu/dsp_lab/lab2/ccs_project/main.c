@@ -57,6 +57,7 @@
 #include "PLL.h"
 #include "stereo.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 Int16 left_input;
 Int16 right_input;
@@ -66,9 +67,9 @@ Int16 mono_input;
 
 
 #define SAMPLES_PER_SECOND 48000
-#define NUM_STAGES 6
-
+#define NUM_STAGES 3 // Match your coefficient array size
 unsigned long int i = 0;
+
 
 
 /* ------------------------------------------------------------------------ *
@@ -78,6 +79,8 @@ unsigned long int i = 0;
  * ------------------------------------------------------------------------ */
 void main( void ) 
 {
+
+    bool processing = true ;
     /* Initialize BSL */
     USBSTK5505_init( );
 	
@@ -106,12 +109,17 @@ void main( void )
      /*  *****************************************************************************************  */
 
 
+     if (processing) {
+         void process_audio_sample(short left_in, short right_in, short *left_out, short *right_out);
 
-//     left_output =  left_input;            // Very simple processing. Replace with your own code!
-//     right_output = right_input;           // Directly connect inputs to outputs.
+         process_audio_sample(left_input, right_input, &left_output, &right_output);
+     }
+     else{
 
+         left_output =  left_input;            // Very simple processing. Replace with your own code!
+         right_output = right_input;           // Directly connect inputs to outputs.
+     }
 
-     process_audio_sample(left_in, right_in, &left_out, &right_out)
 
 
      /*  *****************************************************************************************  */
@@ -163,81 +171,66 @@ void main( void )
 
 
 
-// Define the number of SOS stages.
-// Note: Your MATLAB output generated 6 stages (a 12th order filter).
-// If your lab required a strict overall 6th order filter, you will need 3 stages.
 
-// The scaled B coefficients (Q15 format)
-const int16_t b_coeffs_q15[NUM_STAGES][3] = {
-    { 16404, -32768,  16364 },
-    { 16404,  32767,  16364 },
-    { 16364,  32767,  16404 },
-    { 16364, -32768,  16404 },
-    { 16384,  32767,  16384 },
-    { 16384, -32768,  16384 }
+
+const short b_coeffs_q15[NUM_STAGES][3] = {
+    { 3277,  6554,  3277 }, // Stage 1
+    { 3277, -6554,  3277 }, // Stage 2
+    { 3277,     0, -3277 }  // Stage 3
 };
 
-// The unscaled A coefficients (Q15 format)
-const int16_t a_coeffs_q15[NUM_STAGES][3] = {
-    { 32767, -31759,  31044 },
-    { 32767,  31759,  31044 },
-    { 32767,  23501,  27732 },
-    { 32767, -23501,  27732 },
-    { 32767,   8880,  25185 },
-    { 32767,  -8880,  25185 }
+
+
+
+const short a_coeffs_q15[NUM_STAGES][3] = {
+    { 32768,  28971,  26358 }, // Stage 1
+    { 32768, -28971,  26358 }, // Stage 2
+    { 32768,      0,  18220 }  // Stage 3
 };
 
 // State buffers for the delay lines. Initialized to 0.
-// We need history for both inputs (x) and outputs (y) for EVERY stage.
-int16_t x_history[NUM_STAGES][2] = {0};
-int16_t y_history[NUM_STAGES][2] = {0};
+short x_history[NUM_STAGES][2] = {0};
+short y_history[NUM_STAGES][2] = {0};
 
-/*
- * This function should be called for every incoming audio frame.
- * It takes the raw hardware inputs and assigns the computed outputs.
- */
-void process_audio_sample(int16_t left_in, int16_t right_in, int16_t *left_out, int16_t *right_out) {
 
-    // We are instructed to filter the left channel only
-    int16_t current_val = left_in;
+void process_audio_sample(short left_in, short right_in, short *left_out, short *right_out) {
 
-    // Cascade the signal through all Second-Order Sections
-    for (int stage = 0; stage < NUM_STAGES; stage++) {
+    int32_t current_val_32 = (int32_t)left_in >> 2; // Divide by 4
 
-        // Use a 32-bit accumulator to prevent overflow during addition
-        int32_t accumulator = 0;
-        int16_t stage_input = current_val;
+    int stage;
+    for (stage = 0; stage < NUM_STAGES; stage++) {
+        int32_t acc = 0;
+        short s_in = (short)current_val_32;
 
-        // 1. Feedforward terms (Numerator / B coefficients)
-        accumulator += (int32_t)b_coeffs_q15[stage][0] * stage_input;
-        accumulator += (int32_t)b_coeffs_q15[stage][1] * x_history[stage][0]; // x[n-1]
-        accumulator += (int32_t)b_coeffs_q15[stage][2] * x_history[stage][1]; // x[n-2]
+        // B terms
+        acc += (int32_t)b_coeffs_q15[stage][0] * s_in;
+        acc += (int32_t)b_coeffs_q15[stage][1] * x_history[stage][0];
+        acc += (int32_t)b_coeffs_q15[stage][2] * x_history[stage][1];
 
-        // 2. Feedback terms (Denominator / A coefficients)
-        // Notice the SUBTRACTION here because we are moving terms to the right side of the difference equation
-        accumulator -= (int32_t)a_coeffs_q15[stage][1] * y_history[stage][0]; // y[n-1]
-        accumulator -= (int32_t)a_coeffs_q15[stage][2] * y_history[stage][1]; // y[n-2]
+        // A terms
+        acc -= (int32_t)a_coeffs_q15[stage][1] * y_history[stage][0];
+        acc -= (int32_t)a_coeffs_q15[stage][2] * y_history[stage][1];
 
-        // 3. Bit-shift to convert the Q30 accumulator back to a Q15 16-bit integer
-        int16_t stage_output = (int16_t)(accumulator >> 15);
+        // Shift back to Q15 and apply basic saturation
+        int32_t result = acc >> 15;
+        if (result > 32767) result = 32767;
+        else if (result < -32768) result = -32768;
 
-        // 4. Update the delay lines for the NEXT sample loop
-        x_history[stage][1] = x_history[stage][0]; // x[n-2] = x[n-1]
-        x_history[stage][0] = stage_input;         // x[n-1] = x[n]
+        short s_out = (short)result;
 
-        y_history[stage][1] = y_history[stage][0]; // y[n-2] = y[n-1]
-        y_history[stage][0] = stage_output;        // y[n-1] = y[n]
+        // Update buffers
+        x_history[stage][1] = x_history[stage][0];
+        x_history[stage][0] = s_in;
+        y_history[stage][1] = y_history[stage][0];
+        y_history[stage][0] = s_out;
 
-        // The output of this stage becomes the input for the next stage
-        current_val = stage_output;
+        current_val_32 = result;
     }
 
-    // Optional: Because you scaled all B coefficients by 0.1 earlier,
-    // the total gain has dropped significantly. You may need to multiply
-    // 'current_val' by a scaling factor here to restore the original volume.
-    // current_val = current_val * restore_factor;
+    int32_t final_out = current_val_32 << 2;
+    if (final_out > 32767) final_out = 32767;
+    else if (final_out < -32768) final_out = -32768;
 
-    // Send the final filtered result to both the left and right output channels
-    *left_out  = current_val;
-    *right_out = current_val;
+    *left_out  = (short)final_out;
+    *right_out = (short)final_out;
 }
