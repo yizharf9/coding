@@ -4,7 +4,7 @@ rust/aoc_2023/*
 python/test.ipynb
 
 bgu/algo_design/208066381*
-bgu/gen_models/*
+bgu/gen_models/.venv/
 bgu/test.py
 bgu/dsp_lab/lab2/lab_instructions.pdf
 bgu/cpu_arch/test.c
