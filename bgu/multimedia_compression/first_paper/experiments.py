@@ -79,11 +79,41 @@ ax[1].set_xscale('log'); ax[1].xaxis.set_major_formatter(matplotlib.ticker.Forma
 plt.tight_layout(); plt.savefig('fig_D_jpeg.png', dpi=110); plt.close()
 res['D'] = {str(k): v for k, v in D.items()}
 
-# ---- E: TODO (your code) - is JPEG a linear, shift-invariant system?
-#   Render the SAME blurred edge at three contrasts:  20/200 (10:1),  51/204 (4:1),  120/150 (1.25:1)  DN.
-#   Quantise to 8 bit, JPEG at Q=90 and Q=30, measure MTF50 for each, plot the 6 MTF curves (fig_E_contrast.png)
-#   and store the MTF50 values in res['E'] as {'Q90 4:1': ..., ...}.
-res['E'] = {}
+# ---- E: is JPEG linear? same edge at three contrasts, compressed at Q=90 and Q=30
+# If JPEG were a linear system, the MTF would not depend on the contrast of the edge:
+# a weaker edge would just give a weaker output, and after normalising the MTF to 1 at f=0
+# all contrasts would give the same curve. Here we check if that is true.
+
+# The three contrasts we test: (dark level, light level, name of the ratio), all in DN
+contrasts = [(20, 200, '10:1'), (51, 204, '4:1'), (120, 150, '1.25:1')]
+E = {}                                    # here we save the MTF50 of each of the 6 cases
+fig, ax = plt.subplots(figsize=(8, 5))
+
+# Outer loop: the two JPEG qualities (Q=90 = light compression, drawn with a solid line;
+# Q=30 = strong compression, drawn with a dashed line)
+for q, ls in [(90, '-'), (30, '--')]:
+    # Inner loop: the three contrasts, each one gets its own colour
+    for (dark, light, lab), col in zip(contrasts, ['C0', 'C1', 'C2']):
+        # Make the same edge as before (same angle and same blur), only the dark/light levels change
+        img = L.render_edge(angle_deg=ANG, sigma=SIG, dark=dark, light=light)
+        # Round to 8 bit (like a real camera image), then compress with JPEG and decode it back
+        dec, bpp = L.jpeg(L.to_uint8(img), q)
+        # Measure the MTF of the decoded image with our sfr() and find its MTF50
+        m, m50, _ = curve(dec)
+        # Save the result with a name like 'Q90 4:1'
+        E[f'Q{q} {lab}'] = m50
+        # Draw this MTF curve, with its MTF50 in the legend
+        ax.plot(FF, m, ls, color=col, label=f'Q={q}, {dark}/{light} DN ({lab}): MTF50={m50:.3f}')
+
+# Draw the true MTF for comparison, and a grey line at Nyquist (0.5 cycles/pixel)
+ax.plot(FF, truth, 'k:', lw=1.5, label=f'truth: MTF50={res["true_mtf50"]:.3f}')
+ax.axvline(.5, color='gray', lw=.8)
+# Axis limits, labels, title, grid and legend
+ax.set_xlim(0, 1); ax.set_ylim(0, 1.15); ax.set_xlabel('cycles/pixel'); ax.set_ylabel('MTF')
+ax.set_title('JPEG: same edge at three contrasts (solid Q=90, dashed Q=30)'); ax.grid(alpha=.3); ax.legend(fontsize=8)
+# Save the figure and store the six MTF50 values in the results
+plt.tight_layout(); plt.savefig('fig_E_contrast.png', dpi=110); plt.close()
+res['E'] = E
 
 json.dump(res, open('results.json', 'w'), indent=1, default=float)
 print(json.dumps(res, indent=1, default=lambda o: round(float(o), 4)))
